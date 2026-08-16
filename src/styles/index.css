@@ -1,0 +1,629 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer base {
+  :root {
+    --color-text: #1a1a1a;
+    --color-text-secondary: #4a4a4a;
+    --color-text-muted: #8a8a8a;
+    --color-border: #e2e0dc;
+    --color-border-light: #f0eeea;
+    --color-bg: #f7f6f2;
+    --color-bg-white: #ffffff;
+    --color-accent: #7a1e1e;
+    --color-accent-light: #f5e8e8;
+    --color-accent-hover: #9a2828;
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-[var(--color-bg)] text-[var(--color-text)];
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  /* Columna de lectura editorial — usada en el cuerpo de los artículos publicados. */
+  .prose-pangloss {
+    font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
+    font-size: 1.1875rem;
+    line-height: 1.85;
+    color: #1a1a1a;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .prose-pangloss h1 {
+    font-size: 2.25rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+
+  .prose-pangloss h2 {
+    font-size: 1.625rem;
+    margin-top: 2.5rem;
+    margin-bottom: 0.875rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+    font-weight: 600;
+  }
+
+  .prose-pangloss h3 {
+    font-size: 1.25rem;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+  }
+
+  .prose-pangloss p {
+    margin-bottom: 1.5rem;
+  }
+
+  .prose-pangloss blockquote {
+    border-left: 3px solid var(--color-accent);
+    padding: 0.5rem 0 0.5rem 1.5rem;
+    margin: 2rem 0;
+    font-style: italic;
+    color: #4a4a4a;
+    font-size: 1.2rem;
+  }
+
+  .prose-pangloss ul,
+  .prose-pangloss ol {
+    margin: 1.25rem 0 1.5rem 1.5rem;
+  }
+
+  .prose-pangloss li {
+    margin-bottom: 0.5rem;
+  }
+
+  .prose-pangloss ul {
+    list-style-type: disc;
+  }
+
+  .prose-pangloss ol {
+    list-style-type: decimal;
+  }
+
+  .prose-pangloss a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 150ms ease;
+  }
+
+  .prose-pangloss a:hover {
+    color: var(--color-accent-hover);
+  }
+
+  .prose-pangloss strong {
+    font-weight: 700;
+  }
+
+  .prose-pangloss em {
+    font-style: italic;
+  }
+
+  .prose-pangloss hr {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 2.5rem 0;
+  }
+
+  .prose-pangloss img {
+    max-width: 100%;
+    height: auto;
+    margin: 2rem 0;
+    border-radius: 2px;
+  }
+
+  .prose-pangloss table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+    font-size: 0.95rem;
+  }
+
+  .prose-pangloss th,
+  .prose-pangloss td {
+    border: 1px solid var(--color-border);
+    padding: 0.625rem 0.875rem;
+    text-align: left;
+  }
+
+  .prose-pangloss th {
+    background: #f8f8f8;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .prose-pangloss sup {
+    font-size: 0.7em;
+    vertical-align: super;
+    color: var(--color-accent);
+    cursor: pointer;
+  }
+
+  /* Notas al pie: número de referencia dentro del texto */
+  .prose-pangloss .footnote-ref {
+    font-size: 0.7em;
+    vertical-align: super;
+    color: var(--color-accent);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  /* Figuras (imágenes) dentro del artículo — aparición muy sutil la
+     primera vez que entran en el viewport (ver ArticleImageNode). */
+  .prose-pangloss .article-figure {
+    margin: 2rem 0;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 550ms ease, transform 550ms ease;
+  }
+
+  .prose-pangloss .article-figure.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .prose-pangloss .article-figure img {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0;
+    border-radius: 2px;
+  }
+
+  .prose-pangloss .article-figure figcaption {
+    margin-top: 0.625rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+
+  /* Imagen con texto envolvente: nodo normal del flujo, flotado con float,
+     nunca position:absolute. En móvil se desactiva (ver media query abajo). */
+  .prose-pangloss .article-figure-wrap {
+    margin-top: 0;
+  }
+
+  /* Notas al pie recopiladas al final del artículo */
+  .article-footnotes {
+    max-width: 42rem;
+    margin: 3rem auto 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+    font-family: 'Inter', sans-serif;
+  }
+
+  .article-footnotes-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    margin-bottom: 0.875rem;
+  }
+
+  .article-footnotes ol {
+    padding-left: 1.25rem;
+    counter-reset: notas;
+  }
+
+  .article-footnotes li {
+    font-size: 0.875rem;
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.625rem;
+  }
+
+  .footnote-back {
+    color: var(--color-accent);
+    text-decoration: none;
+    margin-left: 0.25rem;
+  }
+
+  /* Vista previa de nota al pasar el ratón — evita el viaje al final de la
+     página en artículos largos. El enlace real sigue funcionando debajo. */
+  .footnote-marker-wrap {
+    position: relative;
+  }
+
+  .footnote-popover {
+    position: absolute;
+    bottom: 1.5em;
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 15rem;
+    background: var(--color-text);
+    color: var(--color-bg);
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-radius: 2px;
+    z-index: 30;
+    pointer-events: none;
+  }
+
+  /* Remate editorial al final del artículo */
+  .article-end-mark {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0 0;
+  }
+}
+
+/* En pantallas estrechas el texto envolvente deja de tener sentido: la
+   imagen vuelve a flujo normal a ancho completo, sin forzar la maquetación
+   de escritorio. El documento guardado no cambia, solo su presentación. */
+@media (max-width: 640px) {
+  .prose-pangloss .article-figure-wrap {
+    float: none !important;
+    width: 100% !important;
+    margin: 1.5rem 0 !important;
+    position: static !important;
+    top: 0 !important;
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  }
+
+  .font-sans {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Subrayado editorial que crece desde el centro — usado en la navegación. */
+  .link-editorial {
+    position: relative;
+    transition: color 150ms ease;
+  }
+
+  .link-editorial::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -2px;
+    width: 0;
+    height: 1px;
+    background-color: currentColor;
+    transition: width 180ms ease, left 180ms ease;
+  }
+
+  .link-editorial:hover::after {
+    width: 100%;
+    left: 0;
+  }
+
+  /* "Leer artículo →" — la flecha se desplaza unos px al hover */
+  .arrow-nudge {
+    transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-block;
+    will-change: transform;
+  }
+
+  .group:hover .arrow-nudge,
+  .arrow-nudge:hover {
+    transform: translateX(6px);
+  }
+
+  /* Cuadrícula de categorías (Home): sombra "3D" muy discreta, tintada con
+     el color de texto en vez de negro puro para que quede cálida sobre el
+     ivory — nunca la sombra dura/genérica que la identidad visual evita. */
+  .category-tile {
+    box-shadow:
+      0 1px 2px rgba(26, 22, 20, 0.04),
+      0 10px 24px -12px rgba(26, 22, 20, 0.14);
+    transition:
+      transform 280ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .category-tile:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 2px 4px rgba(26, 22, 20, 0.05),
+      0 20px 36px -14px rgba(26, 22, 20, 0.20);
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #d1d1d1;
+    border-radius: 2px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* ============================================================
+   Editor (Fase 6) — la superficie de escritura reutiliza la misma
+   tipografía que la lectura pública (prose-pangloss), para que lo que se
+   ve al escribir sea fiel a lo que se verá publicado.
+   ============================================================ */
+.ProseMirror {
+  outline: none;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 1.1875rem;
+  line-height: 1.85;
+  color: #1a1a1a;
+  min-height: 50vh;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ProseMirror p {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-text-muted);
+  pointer-events: none;
+  height: 0;
+}
+
+.ProseMirror h1 { font-size: 2rem; font-weight: 600; margin: 2rem 0 0.75rem; }
+.ProseMirror h2 { font-size: 1.5rem; font-weight: 600; margin: 2rem 0 0.75rem; }
+.ProseMirror h3 { font-size: 1.2rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+.ProseMirror p { margin-bottom: 1.25rem; }
+.ProseMirror blockquote { border-left: 3px solid var(--color-accent); padding-left: 1.25rem; margin: 1.5rem 0; color: #4a4a4a; font-style: italic; }
+.ProseMirror ul { list-style: disc; padding-left: 1.5rem; margin: 1rem 0; }
+.ProseMirror ol { list-style: decimal; padding-left: 1.5rem; margin: 1rem 0; }
+.ProseMirror li { margin-bottom: 0.375rem; }
+.ProseMirror a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; }
+.ProseMirror hr { border: none; border-top: 1px solid var(--color-border); margin: 2rem 0; }
+
+/* Nodo de imagen redimensionable */
+.editor-figure {
+  position: relative;
+  margin: 1.5rem 0;
+  cursor: default;
+}
+
+.editor-figure.editor-figure-wrap {
+  margin-top: 0;
+}
+
+.editor-figure.is-selected img {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.editor-figure-caption,
+.editor-figure-alt {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  border: none;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  outline: none;
+}
+
+.editor-figure-alt {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.editor-figure-caption::placeholder,
+.editor-figure-alt::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Handles de esquina — círculo visible, área de agarre generosa */
+.riv-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 2px solid var(--color-accent);
+  border-radius: 50%;
+  z-index: 20;
+  touch-action: none;
+}
+.riv-handle-nw { top: -7px; left: -7px; cursor: nwse-resize; }
+.riv-handle-ne { top: -7px; right: -7px; cursor: nesw-resize; }
+.riv-handle-sw { bottom: -7px; left: -7px; cursor: nesw-resize; }
+.riv-handle-se { bottom: -7px; right: -7px; cursor: nwse-resize; }
+
+/* Asa de movimiento vertical (solo con texto envolvente) */
+.riv-vhandle {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 16px;
+  background: var(--color-accent);
+  color: #fff;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize;
+  z-index: 20;
+  touch-action: none;
+}
+
+/* Mini toolbar flotante de la imagen seleccionada */
+.riv-toolbar {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(26, 26, 26, 0.92);
+  padding: 4px;
+  border-radius: 6px;
+  z-index: 20;
+}
+.riv-toolbar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: #ddd;
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.riv-toolbar button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.riv-toolbar button.active { background: var(--color-accent); color: #fff; }
+.riv-toolbar button:disabled { opacity: 0.3; cursor: not-allowed; }
+.riv-toolbar-sep { width: 1px; height: 16px; background: rgba(255, 255, 255, 0.2); margin: 0 2px; }
+
+/* Nota al pie dentro del editor */
+.editor-footnote {
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+/* Fundido muy corto al cambiar de página pública — nunca una salida, nunca
+   un retraso: el contenido nuevo ya está montado, solo se atenúa su
+   aparición. */
+@keyframes page-fade-in-kf {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.page-fade-in {
+  animation: page-fade-in-kf 180ms ease;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-toast-in {
+  animation: toast-in 180ms ease;
+}
+
+/* ============================================================
+   Mundo: Spongeonomics — acentos exclusivos de esta sección. Todo lo que
+   sigue solo se activa dentro de `.world-spongeonomics` (aplicada por
+   ArticlePage únicamente cuando la categoría del artículo pertenece a este
+   mundo, vía lib/worlds/categoryWorlds.tsx). Nada de esto afecta al resto
+   de Pangloss.
+   ============================================================ */
+.world-spongeonomics,
+.world-spongeonomics * {
+  cursor: url('/worlds/spongeonomics-cursor.png') 1 1, auto;
+}
+
+/* A partir de 900px de viewport hay margen suficiente a los lados de la
+   columna editorial (680px) para que las burbujas floten sin invadir nunca
+   el texto; por debajo de eso el propio componente no las genera. */
+.spongeonomics-bubble-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.spongeonomics-bubble {
+  position: absolute;
+  bottom: 10vh;
+  color: var(--color-text);
+  opacity: 0;
+  animation-name: spongeonomics-bubble-rise;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+/* La deriva lateral (--drift, en px) y la duración se fijan por burbuja en
+   el componente según la velocidad de scroll en el momento de aparecer. */
+@keyframes spongeonomics-bubble-rise {
+  0% { opacity: 0; transform: translate(0, 0); }
+  10% { opacity: 0.3; }
+  38% { transform: translate(calc(var(--drift, 10px) * 0.55), -55px); }
+  68% { transform: translate(calc(var(--drift, 10px) * -0.3), -105px); }
+  87% { opacity: 0.2; }
+  100% { opacity: 0; transform: translate(calc(var(--drift, 10px) * 0.15), -150px); }
+}
+
+/* Bloquea el scroll del body cuando el drawer del sidebar admin está abierto */
+body.sidebar-open {
+  overflow: hidden;
+}
+
+/* Transición de página muy corta */
+.fade-enter {
+  opacity: 0;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 200ms ease;
+}
+
+/* Indicadores de estado editorial (dashboard, tablas de artículos) */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot-draft {
+  background-color: #8a8a8a;
+}
+
+.status-dot-in_review {
+  background-color: #c8862a;
+}
+
+.status-dot-published {
+  background-color: #5a8a5a;
+}
+
+.status-dot-archived {
+  background-color: #4a4a4a;
+}

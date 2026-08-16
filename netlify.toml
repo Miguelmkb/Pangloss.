@@ -1,0 +1,22 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Feed RSS servido en una URL limpia, generado en caliente por la función
+# (no un archivo estático: así siempre refleja los artículos publicados más
+# recientes sin depender de un nuevo build).
+[[redirects]]
+  from = "/rss.xml"
+  to = "/.netlify/functions/rss"
+  status = 200
+
+# SPA: cualquier ruta que no sea un archivo real ni una función cae en
+# index.html — el enrutado real lo hace react-router-dom en el cliente.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

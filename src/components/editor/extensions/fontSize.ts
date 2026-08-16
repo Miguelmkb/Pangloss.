@@ -1,0 +1,57 @@
+import { Extension } from '@tiptap/core';
+
+export interface FontSizeOptions {
+  types: string[];
+}
+
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    fontSize: {
+      setFontSize: (fontSize: string) => ReturnType;
+      unsetFontSize: () => ReturnType;
+    };
+  }
+}
+
+/**
+ * Tiptap no trae tamaño de fuente de serie. Añade el atributo `fontSize`
+ * a la marca `textStyle` (ya presente vía @tiptap/extension-text-style).
+ */
+export const FontSize = Extension.create<FontSizeOptions>({
+  name: 'fontSize',
+
+  addOptions() {
+    return { types: ['textStyle'] };
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: (element) => element.style.fontSize || null,
+            renderHTML: (attributes) => {
+              if (!attributes.fontSize) return {};
+              return { style: `font-size: ${attributes.fontSize}` };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      setFontSize:
+        (fontSize: string) =>
+        ({ chain }) =>
+          chain().setMark('textStyle', { fontSize }).run(),
+      unsetFontSize:
+        () =>
+        ({ chain }) =>
+          chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run(),
+    };
+  },
+});
