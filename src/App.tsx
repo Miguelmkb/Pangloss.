@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ToastProvider } from '@/context/ToastContext';
@@ -34,6 +35,15 @@ import { SettingsPage } from '@/pages/admin/SettingsPage';
 
 function PublicLayout() {
   const location = useLocation();
+
+  // React Router no resta el scroll al navegar (a diferencia de una carga
+  // de página tradicional) — sin esto, un enlace pulsado con la página
+  // desplazada hacia abajo "no parece hacer nada", porque la nueva página
+  // se queda con el scroll de la anterior.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return (
     <>
       <Header />
