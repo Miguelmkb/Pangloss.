@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { computeFigureStyle, type ResizableImageAttrs } from './imageAttrs';
+import { computeFigureLayout, type ResizableImageAttrs } from './imageAttrs';
 import { FootnoteMarker } from '@/components/public/FootnoteMarker';
 
 /**
@@ -124,17 +124,29 @@ function ArticleImageNode({ attrs }: { attrs: Record<string, unknown> }) {
   const caption = typeof attrs.caption === 'string' ? attrs.caption : '';
   const align = attrs.align === 'left' || attrs.align === 'right' ? attrs.align : 'center';
   const wrap = Boolean(attrs.wrap) && align !== 'center';
-  const style = computeFigureStyle(attrs as Partial<ResizableImageAttrs>);
+  const { wrapperStyle, figureStyle } = computeFigureLayout(attrs as Partial<ResizableImageAttrs>);
   const className = [wrap ? 'article-figure article-figure-wrap' : 'article-figure', visible && 'is-visible']
     .filter(Boolean)
     .join(' ');
 
-  return (
-    <figure ref={ref} className={className} style={style}>
+  const figure = (
+    <figure ref={ref} className={className} style={figureStyle}>
       <img src={src} alt={alt} loading="lazy" />
       {caption && <figcaption>{caption}</figcaption>}
     </figure>
   );
+
+  // El desplazamiento vertical (offsetY) va en un `<div>` de flujo normal
+  // que envuelve la figura flotante, nunca en la propia figura — un
+  // flotante con margin-top no recalcula la zona de exclusión que reserva
+  // para el texto de alrededor (ver el comentario largo en
+  // ResizableImageView.tsx, donde se explica y se verificó de forma
+  // aislada). Sin offsetY que aplicar (la mayoría de imágenes, y siempre
+  // que no hay wrap) no hace falta el div extra.
+  if (wrap && typeof attrs.offsetY === 'number' && attrs.offsetY !== 0) {
+    return <div style={wrapperStyle}>{figure}</div>;
+  }
+  return figure;
 }
 
 function renderNode(node: ContentNode, footnoteNumbers: Map<string, number>, key: string): ReactNode {

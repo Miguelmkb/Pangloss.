@@ -207,11 +207,12 @@
     color: var(--color-text-muted);
   }
 
-  /* Imagen con texto envolvente: nodo normal del flujo, flotado con float,
-     nunca position:absolute. En móvil se desactiva (ver media query abajo). */
-  .prose-pangloss .article-figure-wrap {
-    margin-top: 0;
-  }
+  /* Imagen con texto envolvente: nodo normal del flujo, flotado con float.
+     Su posición vertical (offsetY), cuando la tiene, es un margin-top en
+     un <div> de flujo normal que la envuelve — nunca en la propia figura
+     flotante (ver computeFigureLayout) — así el hueco que reserva para el
+     texto coincide siempre con dónde está la imagen de verdad. En móvil
+     se desactiva por completo (ver media query abajo). */
 
   /* Notas al pie recopiladas al final del artículo */
   .article-footnotes {
@@ -291,7 +292,6 @@
     width: 100% !important;
     margin: 1.5rem 0 !important;
     position: static !important;
-    top: 0 !important;
   }
 }
 
@@ -422,37 +422,56 @@
   cursor: default;
 }
 
-.editor-figure.editor-figure-wrap {
-  margin-top: 0;
-}
-
 .editor-figure.is-selected img {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-.editor-figure-caption,
-.editor-figure-alt {
+/* Popover contextual de "Texto alternativo" / "Pie de foto" — siempre
+   `position: absolute` (ver ImageFieldPopover): nunca contenido normal del
+   `<figure>`, así nunca cuenta para su altura ni, con texto envolvente,
+   para el hueco que el flotante reserva alrededor. */
+.riv-field-popover {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  padding: 0.5rem 0.625rem;
+  z-index: 25;
+  width: max-content;
+  max-width: min(22rem, 90%);
+}
+
+.riv-field-popover-label {
   display: block;
-  width: 100%;
-  margin-top: 0.5rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.riv-field-popover-input {
+  display: block;
+  width: 18rem;
+  max-width: 100%;
   border: none;
+  border-bottom: 1px solid var(--color-border);
   background: transparent;
   font-family: 'Inter', sans-serif;
   font-size: 0.8125rem;
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   outline: none;
+  padding-bottom: 0.125rem;
 }
 
-.editor-figure-alt {
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-}
-
-.editor-figure-caption::placeholder,
-.editor-figure-alt::placeholder {
-  color: var(--color-text-muted);
+.riv-field-popover-input:focus {
+  border-bottom-color: var(--color-text-primary);
 }
 
 /* Handles de esquina — círculo visible, área de agarre generosa */
