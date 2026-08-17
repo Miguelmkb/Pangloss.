@@ -178,17 +178,21 @@
   }
 
   /* Figuras (imágenes) dentro del artículo — aparición muy sutil la
-     primera vez que entran en el viewport (ver ArticleImageNode). */
+     primera vez que entran en el viewport (ver ArticleImageNode).
+     `--figure-nudge-y` es el desplazamiento vertical puramente visual de
+     `offsetY` (solo en imágenes sin texto envolvente, ver imageOffsetYPx
+     en imageAttrs.ts) — se combina aquí con la propia animación de
+     aparición en vez de un `transform` a secas, que la pisaría. */
   .prose-pangloss .article-figure {
     margin: 2rem 0;
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(calc(10px + var(--figure-nudge-y, 0px)));
     transition: opacity 550ms ease, transform 550ms ease;
   }
 
   .prose-pangloss .article-figure.is-visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(var(--figure-nudge-y, 0px));
   }
 
   .prose-pangloss .article-figure img {
@@ -490,7 +494,8 @@
 .riv-handle-sw { bottom: -7px; left: -7px; cursor: nesw-resize; }
 .riv-handle-se { bottom: -7px; right: -7px; cursor: nwse-resize; }
 
-/* Asa de movimiento vertical (solo con texto envolvente) */
+/* Asa de movimiento vertical (solo SIN texto envolvente — ver el porqué en
+   ResizableImageView.tsx e imageAttrs.ts) */
 .riv-vhandle {
   position: absolute;
   top: -11px;

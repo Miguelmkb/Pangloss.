@@ -1,7 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react';
 import { AlignLeft, AlignCenter, AlignRight, WrapText, GripHorizontal, Trash2, Accessibility, Captions } from 'lucide-react';
-import { computeFigureLayout, MIN_IMAGE_WIDTH, MAX_IMAGE_WIDTH, type ImageAlign, type ImageSpacing } from '@/lib/content/imageAttrs';
+import { computeFigureLayout, imageOffsetYPx, MIN_IMAGE_WIDTH, MAX_IMAGE_WIDTH, type ImageAlign, type ImageSpacing } from '@/lib/content/imageAttrs';
 
 const SPACING_OPTIONS: { value: ImageSpacing; label: string }[] = [
   { value: 'small', label: 'Pequeño' },
@@ -65,25 +65,19 @@ function ImageFieldPopover({
  * hasta soltar, una única vez (`updateAttributes`), leyendo el último valor
  * desde una ref para no depender del ciclo de render de React en ese punto.
  *
- * GEOMETRÍA DEL WRAP — por qué el desplazamiento vertical (offsetY) vive en
- * el `<div>` envolvente y no en este `<figure>`:
- * un elemento flotado con `margin-top` NO recalcula la zona de exclusión
- * que reserva para el texto que lo rodea — el navegador la sigue basando
- * en la posición ESTÁTICA del flotante, la que tendría con margin-top:0.
- * Verificado de forma aislada, en HTML/CSS puro, sin Tiptap ni React de
- * por medio: mover un flotante con margin-top dejaba el texto envolviendo
- * donde el flotante SOLÍA estar, no donde está de verdad. Un contenedor de
- * flujo NORMAL (no flotado) con ese mismo margin-top, en cambio, sí
- * desplaza correctamente la zona de exclusión, porque su reflujo es el de
- * cualquier bloque corriente — el flotante que vive dentro, con
- * margin-top:0, hereda esa posición ya desplazada.
- *
- * `ReactNodeViewRenderer` (Tiptap) ya monta este componente dentro de un
- * `<div class="react-renderer ...">` propio — el hermano real de los
- * párrafos en el flujo de `.ProseMirror`. Es exactamente el contenedor que
- * hace falta: `computeFigureLayout` separa `wrapperStyle` (solo
- * margin-top, para ESE div) de `figureStyle` (float, ancho, márgenes
- * horizontales — para este `<figure>`, con margin-top siempre en 0).
+ * POR QUÉ EL ARRASTRE VERTICAL SOLO EXISTE SIN TEXTO ENVOLVENTE (`wrap`):
+ * la zona de exclusión que reserva un flotante para el texto de alrededor
+ * está anclada siempre a su posición estática en el flujo — ninguna técnica
+ * CSS (margin, shape-outside, transform) puede desplazarla sin, a la vez,
+ * desplazar el resto del documento o dejar de afectar al texto siguiente.
+ * Investigado y verificado de forma exhaustiva (ver el comentario en
+ * `computeFigureLayout`, en `imageAttrs.ts`, con el detalle completo). Por
+ * eso, con `wrap` activo, no hay asa de movimiento vertical — para
+ * reposicionar una imagen envolvente se la mueve de párrafo, como en
+ * cualquier editor de texto con imágenes flotantes. Sin `wrap` no hay
+ * ninguna exclusión que reconciliar, así que `offsetY` sí puede ser un
+ * simple `transform: translateY(...)` sobre la propia figura — puramente
+ * visual, nunca participa en el flujo.
  */
 export function ResizableImageView({ node, updateAttributes, selected, deleteNode }: NodeViewProps) {
   const attrs = node.attrs as {
@@ -104,7 +98,6 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
   // documento (ver ImageFieldPopover).
   const [activeField, setActiveField] = useState<'alt' | 'caption' | null>(null);
 
-  const figureRef = useRef<HTMLElement | null>(null);
   const dragWidthRef = useRef<number | null>(null);
   const dragOffsetYRef = useRef<number | null>(null);
   const resizeState = useRef<{ startX: number; startWidth: number; dir: number } | null>(null);
@@ -112,41 +105,6 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
   const rafId = useRef<number | undefined>(undefined);
 
   const wrap = attrs.wrap && attrs.align !== 'center';
-
-  /** Aplica (o limpia) `wrapperStyle` — solo el desplazamiento vertical —
-   * en el `<div>` que Tiptap genera alrededor de este NodeView. Se llama
-   * tanto desde el efecto de layout (valores ya confirmados) como desde
-   * el propio arrastre (valores en vivo), para que el texto de alrededor
-   * siga la imagen fotograma a fotograma, no solo al soltar.
-   *
-   * `element.style.marginTop = 24` (número, sin unidad) es una
-   * declaración CSS inválida y el navegador la descarta en silencio — a
-   * diferencia de la prop `style` de React, que añade "px" automáticamente
-   * a los números, asignar directamente al `style` del DOM no lo hace. Hay
-   * que convertir explícitamente cada valor numérico antes de asignarlo. */
-  function applyWrapperGeometry(width: number, offsetY: number) {
-    const wrapperEl = figureRef.current?.parentElement;
-    if (!wrapperEl) return;
-    if (!wrap) {
-      wrapperEl.style.cssText = '';
-      return;
-    }
-    const { wrapperStyle } = computeFigureLayout({ ...attrs, width, offsetY });
-    wrapperEl.style.cssText = '';
-    for (const [prop, value] of Object.entries(wrapperStyle)) {
-      if (value === undefined) continue;
-      const cssValue = typeof value === 'number' ? `${value}px` : String(value);
-      wrapperEl.style.setProperty(prop.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`), cssValue);
-    }
-  }
-
-  useLayoutEffect(() => {
-    applyWrapperGeometry(dragWidth ?? attrs.width, dragOffsetY ?? attrs.offsetY);
-    // Los valores de arrastre en curso también deben poder disparar esto
-    // (además del efecto ya cubre el caso confirmado) — dependencias
-    // explícitas, no el objeto `attrs` entero, para no re-ejecutar de más.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wrap, attrs.align, attrs.spacing, attrs.width, attrs.offsetY, dragWidth, dragOffsetY]);
 
   useEffect(() => setDragWidth(null), [attrs.width]);
   useEffect(() => setDragOffsetY(null), [attrs.offsetY]);
@@ -169,7 +127,6 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
         rafId.current = requestAnimationFrame(() => {
           dragWidthRef.current = next;
           setDragWidth(next);
-          applyWrapperGeometry(next, dragOffsetYRef.current ?? attrs.offsetY);
         });
       }
       if (moveState.current) {
@@ -179,7 +136,6 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
         rafId.current = requestAnimationFrame(() => {
           dragOffsetYRef.current = next;
           setDragOffsetY(next);
-          applyWrapperGeometry(dragWidthRef.current ?? attrs.width, next);
         });
       }
     }
@@ -206,8 +162,7 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
       window.removeEventListener('pointerup', onUp);
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [updateAttributes, wrap]);
+  }, [updateAttributes]);
 
   function startResize(e: ReactPointerEvent, dir: number) {
     e.preventDefault();
@@ -216,15 +171,24 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
   }
 
   function startMove(e: ReactPointerEvent) {
+    // Sin `wrap` no hay ninguna zona de exclusión que reconciliar, así que
+    // el asa correspondiente ni siquiera se renderiza (ver JSX más abajo) —
+    // esta comprobación es solo un cinturón de seguridad.
+    if (wrap) return;
     e.preventDefault();
     e.stopPropagation();
     moveState.current = { startY: e.clientY, startOffset: dragOffsetY ?? attrs.offsetY };
   }
 
-  // `figureStyle` siempre va en el propio `<figure>` (float, ancho,
-  // márgenes horizontales) — el desplazamiento vertical, cuando aplica,
-  // vive aparte, en el `<div>` envolvente (ver applyWrapperGeometry).
-  const { figureStyle } = computeFigureLayout({ ...attrs, width: dragWidth ?? attrs.width });
+  // Recalculado en cada render a partir de los valores de arrastre en curso
+  // (o los ya confirmados): con `wrap`, `offsetY` no participa en absoluto
+  // (ver el porqué en `computeFigureLayout`); sin `wrap`, es un
+  // `transform: translateY(...)` puramente visual, aplicado directamente
+  // aquí (a diferencia del renderer público, `.editor-figure` no tiene
+  // ninguna otra animación con la que ese transform pueda chocar).
+  const liveAttrs = { ...attrs, width: dragWidth ?? attrs.width, offsetY: dragOffsetY ?? attrs.offsetY };
+  const offsetYPx = imageOffsetYPx(liveAttrs);
+  const figureStyle = { ...computeFigureLayout(liveAttrs), transform: offsetYPx ? `translateY(${offsetYPx}px)` : undefined };
 
   function setAlign(align: ImageAlign) {
     updateAttributes({ align, wrap: align === 'center' ? false : attrs.wrap });
@@ -232,7 +196,6 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
 
   return (
     <NodeViewWrapper
-      ref={figureRef}
       as="figure"
       className={`editor-figure ${wrap ? 'editor-figure-wrap' : ''} ${selected ? 'is-selected' : ''}`}
       style={figureStyle}
@@ -251,7 +214,7 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
               />
             ))}
 
-            {wrap && (
+            {!wrap && (
               <div className="riv-vhandle" title="Mover verticalmente" onPointerDown={startMove}>
                 <GripHorizontal className="w-3.5 h-3.5" />
               </div>
