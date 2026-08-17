@@ -58,11 +58,15 @@ export async function createDraftArticle(userId: string): Promise<Article> {
  * hook no se entera por sí solo. Sin devolver la versión aquí para que la
  * llamante la sincronice, el siguiente autoguardado partiría de una versión
  * ya caducada y fallaría con un falso conflicto.
+ *
+ * No se toca `published_at` desde aquí: el trigger `articles_freeze_published_at`
+ * (en la base de datos) es quien lo fija la primera vez que el estado pasa a
+ * "published" y lo protege de cualquier reescritura después — incluida una
+ * republicación tras despublicar. Es la fecha de publicación ORIGINAL, no la
+ * de la última edición (esa es `updated_at`, gestionada aparte).
  */
 export async function setArticleStatus(id: string, status: ArticleStatus): Promise<{ version: number }> {
-  const patch: { status: ArticleStatus; published_at?: string | null } = { status };
-  if (status === 'published') patch.published_at = new Date().toISOString();
-  const { data, error } = await supabase.from('articles').update(patch).eq('id', id).select('version').single();
+  const { data, error } = await supabase.from('articles').update({ status }).eq('id', id).select('version').single();
   if (error) throw error;
   return data as { version: number };
 }

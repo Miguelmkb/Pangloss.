@@ -8,6 +8,12 @@ import { createClient } from '@supabase/supabase-js';
  * (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY) — deben estar configuradas
  * también como variables de entorno del sitio en Netlify, no solo en
  * .env.local.
+ *
+ * `published_at` es la fecha de publicación ORIGINAL (inmutable a partir de
+ * la primera vez que se fija — ver migración
+ * 20260817160000_freeze_published_at.sql), así que editar un artículo ya
+ * publicado nunca lo hace parecer una entrada nueva aquí: mismo pubDate,
+ * mismo guid, en el mismo sitio del listado.
  */
 function escapeXml(value: string): string {
   return value
@@ -16,6 +22,14 @@ function escapeXml(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
+}
+
+interface CategoryRef {
+  name: string;
+}
+
+interface AuthorRef {
+  name: string;
 }
 
 export const handler: Handler = async () => {
@@ -30,7 +44,7 @@ export const handler: Handler = async () => {
 
   const { data: articles, error } = await supabase
     .from('articles')
-    .select('title, slug, excerpt, published_at, author:authors(name)')
+    .select('id, title, slug, excerpt, published_at, featured_image_url, author:authors(name), category:categories(name)')
     .eq('status', 'published')
     .order('published_at', { ascending: false })
     .limit(50);
@@ -39,21 +53,34 @@ export const handler: Handler = async () => {
     return { statusCode: 500, body: 'No se pudo generar el feed.' };
   }
 
-  const items = (articles ?? [])
+  const rows = articles ?? [];
+
+  const items = rows
     .map((a) => {
       const link = `${siteUrl}/articulo/${a.slug}`;
-      const author = Array.isArray(a.author) ? a.author[0] : a.author;
+      const author = (Array.isArray(a.author) ? a.author[0] : a.author) as AuthorRef | null;
+      const category = (Array.isArray(a.category) ? a.category[0] : a.category) as CategoryRef | null;
       return `
     <item>
       <title>${escapeXml(a.title || 'Sin título')}</title>
       <link>${link}</link>
-      <guid isPermaLink="true">${link}</guid>
+      <guid isPermaLink="false">${a.id}</guid>
       <pubDate>${new Date(a.published_at as string).toUTCString()}</pubDate>
       ${a.excerpt ? `<description>${escapeXml(a.excerpt)}</description>` : ''}
       ${author?.name ? `<dc:creator>${escapeXml(author.name)}</dc:creator>` : ''}
+      ${category?.name ? `<category>${escapeXml(category.name)}</category>` : ''}
+      ${a.featured_image_url ? `<media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="${escapeXml(a.featured_image_url)}" />` : ''}
     </item>`;
     })
     .join('');
+
+  // Igual que en `Home`/`Articles` (orden por `published_at` desc): el
+  // artículo más reciente de la lista ya ordenada marca el `lastBuildDate`
+  // del canal — no hace falta una consulta aparte ni usar `now()`, que
+  // cambiaría en cada request sin que el contenido lo haya hecho.
+  const lastBuildDate = rows[0]?.published_at
+    ? new Date(rows[0].published_at as string).toUTCString()
+    : new Date().toUTCString();
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -62,6 +89,7 @@ export const handler: Handler = async () => {
     <link>${siteUrl}</link>
     <description>Revista digital de análisis, ensayo e ideas.</description>
     <language>es</language>
+    <lastBuildDate>${lastBuildDate}</lastBuildDate>
     <atom:link xmlns:atom="http://www.w3.org/2005/Atom" href="${siteUrl}/rss.xml" rel="self" type="application/rss+xml" />
     ${items}
   </channel>
