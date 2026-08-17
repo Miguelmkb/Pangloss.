@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { ROLE_LABELS } from '@/types/database';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 interface NavItem {
   to: string;
@@ -36,6 +37,7 @@ export function AdminLayout() {
   const { profile, signOut, isAdmin, isEditor } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  useScrollRestoration();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
