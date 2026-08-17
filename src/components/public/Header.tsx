@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Search, Menu, X } from 'lucide-react';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { useSearchOverlay } from '@/context/SearchOverlayContext';
 
 export function Header() {
   const navArticles = useSiteContent('nav.articles');
@@ -20,7 +21,7 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const { open: searchOpen, setOpen: setSearchOpen } = useSearchOverlay();
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const lastYRef = useRef(0);

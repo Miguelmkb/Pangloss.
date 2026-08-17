@@ -4,6 +4,7 @@ import { Mail, Rss, ArrowRight } from 'lucide-react';
 import { CONTACT_EMAIL, gmailComposeHref } from '@/lib/contact';
 import { useSubscribe } from '@/hooks/useSubscribe';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { useSearchOverlay } from '@/context/SearchOverlayContext';
 
 const CONTACT_HREF = gmailComposeHref();
 
@@ -66,12 +67,12 @@ export function Footer() {
   const searchLink = useSiteContent('footer.searchLink');
   const aboutLink = useSiteContent('footer.aboutLink');
   const collaborateLink = useSiteContent('footer.collaborateLink');
+  const { setOpen: setSearchOpen } = useSearchOverlay();
 
   const PUBLICACION_LINKS = [
     { to: '/articulos', label: navArticles },
     { to: '/categorias', label: navCategories },
     { to: '/autores', label: navAuthors },
-    { to: '/buscar', label: searchLink },
   ];
 
   return (
@@ -101,6 +102,18 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                {/* Abre el mismo overlay que la lupa de la cabecera, en vez
+                    de llevar a /buscar sin nada escrito — antes esa página
+                    solo le decía al lector que fuera a buscar arriba. */}
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  className="text-sm font-sans text-text-secondary hover:text-text-primary transition-colors"
+                >
+                  {searchLink}
+                </button>
+              </li>
             </ul>
           </div>
 

@@ -3,6 +3,7 @@ import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { SiteContentProvider } from '@/context/SiteContentContext';
+import { SearchOverlayProvider } from '@/context/SearchOverlayContext';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { PageLoader } from '@/components/ui/PageLoader';
 import { SetupScreen } from '@/components/ui/SetupScreen';
@@ -40,7 +41,7 @@ function PublicLayout() {
   useScrollRestoration();
 
   return (
-    <>
+    <SearchOverlayProvider>
       <Header />
       {/* key=pathname: cada cambio de ruta pública remonta este div, lo que
           relanza la animación CSS de entrada — un fundido de ~180ms, nunca
@@ -50,7 +51,7 @@ function PublicLayout() {
         <Outlet />
       </main>
       <Footer />
-    </>
+    </SearchOverlayProvider>
   );
 }
 
