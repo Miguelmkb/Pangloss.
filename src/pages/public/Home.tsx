@@ -56,7 +56,7 @@ export function HomePage() {
     <div>
       {/* Artículo destacado */}
       <section className="max-w-6xl mx-auto px-6 pt-14 pb-16">
-        <Link to={`/articulo/${featured.slug}`} className="group grid md:grid-cols-2 gap-10 items-center">
+        <Link to={`/articulo/${featured.slug}`} className="group grid lg:grid-cols-2 gap-10 items-start">
           <div>
             {featured.category && (
               <span className="block text-xs font-sans font-medium uppercase tracking-widest text-accent mb-4">
@@ -85,7 +85,14 @@ export function HomePage() {
             <img
               src={featured.featured_image_url}
               alt={featured.featured_image_alt ?? ''}
-              className="w-full aspect-[4/3] object-cover rounded-sm"
+              // max-w-[440px] (frente a los ~532px que ocupaba antes, un
+              // ~17% menos) hace que, con este mismo aspect-[4/3], el alto
+              // resultante (~330px) case casi exactamente con el alto del
+              // bloque de texto de al lado (eyebrow a CTA, ~327px) — así el
+              // ajuste de proporción por sí solo ya deja los bordes
+              // superior e inferior prácticamente alineados con
+              // items-start, sin necesitar ningún marco.
+              className="w-full lg:max-w-[440px] aspect-[4/3] object-cover object-[47%_center] rounded-sm lg:justify-self-start"
             />
           )}
         </Link>
