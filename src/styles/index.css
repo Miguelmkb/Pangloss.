@@ -426,6 +426,20 @@
   cursor: default;
 }
 
+/* Reinicia el `margin: 2rem 0` genérico de `.prose-pangloss img` (pensado
+   como último recurso para una <img> suelta, sin figura, que en la
+   práctica nunca ocurre — todas las imágenes de artículo pasan por una
+   `<figure>`) — exactamente el mismo reset que ya tiene su equivalente
+   público, `.prose-pangloss .article-figure img` (ver index.css). Sin este
+   reset, esa `<img>` heredaba 2rem de margen arriba Y abajo dentro de la
+   figura, inflando su altura real muy por encima de la de la imagen — el
+   "espacio excesivo" bajo las imágenes con wrapping no era el
+   `marginBottom` del propio wrap ni ningún colapso de márgenes: la imagen
+   ocupaba de verdad esos 4rem extra. */
+.editor-figure img {
+  margin: 0;
+}
+
 .editor-figure.is-selected img {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
@@ -512,6 +526,46 @@
   cursor: ns-resize;
   z-index: 20;
   touch-action: none;
+}
+
+/* Asa para anclar la imagen en otro punto del documento (ver
+   `startReposition` en ResizableImageView.tsx) — siempre disponible,
+   con o sin texto envolvente, a diferencia de `.riv-vhandle`. */
+.riv-move-handle {
+  position: absolute;
+  bottom: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 16px;
+  background: var(--color-accent);
+  color: #fff;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  z-index: 20;
+  touch-action: none;
+}
+.riv-move-handle:active { cursor: grabbing; }
+
+/* Indicador de "aquí se ancla" mientras se arrastra con `.riv-move-handle`
+   — renderizado vía portal en `document.body` (ver ResizableImageView.tsx)
+   para que sus coordenadas de viewport (`coordsAtPos`) no se vean afectadas
+   por ningún `transform` de un ancestro. Nunca reescribe el documento por
+   sí solo: es puramente informativo hasta que se suelta. */
+.riv-drop-indicator {
+  position: fixed;
+  height: 3px;
+  background: var(--color-accent);
+  border-radius: 2px;
+  z-index: 60;
+  pointer-events: none;
+  transform: translateY(-1px);
+}
+.riv-drop-indicator-split {
+  box-shadow: 0 -8px 0 -6px var(--color-accent), 0 8px 0 -6px var(--color-accent);
 }
 
 /* Mini toolbar flotante de la imagen seleccionada */

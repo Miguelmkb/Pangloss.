@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react';
-import { AlignLeft, AlignCenter, AlignRight, WrapText, GripHorizontal, Trash2, Accessibility, Captions } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, WrapText, GripHorizontal, Move, Trash2, Accessibility, Captions } from 'lucide-react';
 import { computeFigureLayout, imageOffsetYPx, MIN_IMAGE_WIDTH, MAX_IMAGE_WIDTH, type ImageAlign, type ImageSpacing } from '@/lib/content/imageAttrs';
+import { resolveDropInsertion, moveImageAt } from '@/lib/content/imageReposition';
 
 const SPACING_OPTIONS: { value: ImageSpacing; label: string }[] = [
   { value: 'small', label: 'Pequeño' },
@@ -79,7 +81,7 @@ function ImageFieldPopover({
  * simple `transform: translateY(...)` sobre la propia figura — puramente
  * visual, nunca participa en el flujo.
  */
-export function ResizableImageView({ node, updateAttributes, selected, deleteNode }: NodeViewProps) {
+export function ResizableImageView({ node, updateAttributes, selected, deleteNode, editor, getPos }: NodeViewProps) {
   const attrs = node.attrs as {
     src: string;
     alt: string;
@@ -97,11 +99,19 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
   // campos permanentemente en pantalla, y nunca como parte del flujo del
   // documento (ver ImageFieldPopover).
   const [activeField, setActiveField] = useState<'alt' | 'caption' | null>(null);
+  // Indicador de "aquí se anclaría" mientras se reposiciona (ver
+  // startReposition) — nunca reescribe el documento durante el arrastre,
+  // solo dibuja esta franja. `willSplit` decide si se pinta como una línea
+  // fina (limite de bloque) o una franja que resalta el párrafo entero
+  // (se va a partir por ahí).
+  const [dropIndicator, setDropIndicator] = useState<{ top: number; left: number; width: number; willSplit: boolean } | null>(null);
 
   const dragWidthRef = useRef<number | null>(null);
   const dragOffsetYRef = useRef<number | null>(null);
   const resizeState = useRef<{ startX: number; startWidth: number; dir: number } | null>(null);
   const moveState = useRef<{ startY: number; startOffset: number } | null>(null);
+  const repositioning = useRef(false);
+  const dropPosRef = useRef<number | null>(null);
   const rafId = useRef<number | undefined>(undefined);
 
   const wrap = attrs.wrap && attrs.align !== 'center';
@@ -138,9 +148,31 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
           setDragOffsetY(next);
         });
       }
+      if (repositioning.current) {
+        // Solo lectura de posición (`posAtCoords`, `coordsAtPos`): un
+        // hit-test nativo de ProseMirror, no una remaquetación — el
+        // documento no se toca hasta soltar. Ver el comentario grande más
+        // arriba sobre por qué esto no es lo mismo que el reflow
+        // línea-a-línea que se descartó.
+        const hit = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
+        if (!hit) {
+          dropPosRef.current = null;
+          if (rafId.current) cancelAnimationFrame(rafId.current);
+          rafId.current = requestAnimationFrame(() => setDropIndicator(null));
+          return;
+        }
+        dropPosRef.current = hit.pos;
+        const { insertPos, willSplit } = resolveDropInsertion(editor.state.doc, hit.pos);
+        const coords = editor.view.coordsAtPos(insertPos);
+        const editorRect = editor.view.dom.getBoundingClientRect();
+        if (rafId.current) cancelAnimationFrame(rafId.current);
+        rafId.current = requestAnimationFrame(() => {
+          setDropIndicator({ top: coords.top, left: editorRect.left, width: editorRect.width, willSplit });
+        });
+      }
     }
 
-    function onUp() {
+    function onUp(e: PointerEvent) {
       if (resizeState.current) {
         const final = dragWidthRef.current ?? resizeState.current.startWidth;
         updateAttributes({ width: final });
@@ -153,6 +185,15 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
         dragOffsetYRef.current = null;
         moveState.current = null;
       }
+      if (repositioning.current) {
+        repositioning.current = false;
+        setDropIndicator(null);
+        const hit = editor.view.posAtCoords({ left: e.clientX, top: e.clientY }) ?? (dropPosRef.current !== null ? { pos: dropPosRef.current } : null);
+        dropPosRef.current = null;
+        if (hit) {
+          moveImageAt(editor.state, (tr) => editor.view.dispatch(tr), getPos(), hit.pos);
+        }
+      }
     }
 
     window.addEventListener('pointermove', onMove);
@@ -162,7 +203,7 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
       window.removeEventListener('pointerup', onUp);
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
-  }, [updateAttributes]);
+  }, [updateAttributes, editor, getPos]);
 
   function startResize(e: ReactPointerEvent, dir: number) {
     e.preventDefault();
@@ -180,6 +221,17 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
     moveState.current = { startY: e.clientY, startOffset: dragOffsetY ?? attrs.offsetY };
   }
 
+  /** Arrastrar para anclar la imagen en otro punto del documento — ver
+   * `imageReposition.ts` para la construcción de la transacción real, que
+   * solo ocurre una vez, al soltar. Disponible con o sin `wrap`: es
+   * ortogonal al ajuste visual de `offsetY`, cambia DÓNDE está la imagen
+   * en el documento, no cómo se ve dentro de ese punto. */
+  function startReposition(e: ReactPointerEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    repositioning.current = true;
+  }
+
   // Recalculado en cada render a partir de los valores de arrastre en curso
   // (o los ya confirmados): con `wrap`, `offsetY` no participa en absoluto
   // (ver el porqué en `computeFigureLayout`); sin `wrap`, es un
@@ -195,12 +247,7 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
   }
 
   return (
-    <NodeViewWrapper
-      as="figure"
-      className={`editor-figure ${wrap ? 'editor-figure-wrap' : ''} ${selected ? 'is-selected' : ''}`}
-      style={figureStyle}
-      data-drag-handle
-    >
+    <NodeViewWrapper as="figure" className={`editor-figure ${wrap ? 'editor-figure-wrap' : ''} ${selected ? 'is-selected' : ''}`} style={figureStyle}>
       <div className="relative select-none">
         <img src={attrs.src} alt={attrs.alt} className="block w-full h-auto rounded-sm" draggable={false} />
 
@@ -215,10 +262,23 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
             ))}
 
             {!wrap && (
-              <div className="riv-vhandle" title="Mover verticalmente" onPointerDown={startMove}>
+              <div className="riv-vhandle" title="Mover verticalmente (ajuste visual)" onPointerDown={startMove}>
                 <GripHorizontal className="w-3.5 h-3.5" />
               </div>
             )}
+
+            <div className="riv-move-handle" title="Arrastrar para anclar en otro punto del texto" onPointerDown={startReposition}>
+              <Move className="w-3.5 h-3.5" />
+            </div>
+
+            {dropIndicator &&
+              createPortal(
+                <div
+                  className={`riv-drop-indicator ${dropIndicator.willSplit ? 'riv-drop-indicator-split' : ''}`}
+                  style={{ top: dropIndicator.top, left: dropIndicator.left, width: dropIndicator.width }}
+                />,
+                document.body,
+              )}
 
             {activeField === 'alt' && (
               <ImageFieldPopover
