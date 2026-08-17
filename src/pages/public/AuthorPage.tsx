@@ -6,10 +6,17 @@ import { getArticlesByAuthorSlug } from '@/lib/services/articles.public';
 import { ArticleListItem } from '@/components/public/ArticleListItem';
 import { AuthorAvatar } from '@/pages/public/AuthorsPage';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { NotFoundMark } from '@/components/public/NotFoundMark';
 import { usePageMeta } from '@/lib/seo';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export function AuthorPage() {
   const { slug } = useParams();
+  const notFoundTitle = useSiteContent('author.notFoundTitle');
+  const linkLostDescription = useSiteContent('common.linkLostDescription');
+  const emptyTitle = useSiteContent('author.emptyTitle');
+  const emptyDescription = useSiteContent('author.emptyDescription');
+  const backLink = useSiteContent('author.backLink');
   const [author, setAuthor] = useState<Author | null | undefined>(undefined);
   const [articles, setArticles] = useState<Article[]>([]);
 
@@ -35,7 +42,7 @@ export function AuthorPage() {
   if (author === undefined) return null;
 
   if (!author) {
-    return <EmptyState title="Este autor no existe." description="Puede que el enlace se haya perdido por el camino." />;
+    return <EmptyState title={notFoundTitle} description={linkLostDescription} illustration={<NotFoundMark />} />;
   }
 
   return (
@@ -70,7 +77,7 @@ export function AuthorPage() {
 
       <div className="pt-8 border-t border-border-light">
         {articles.length === 0 ? (
-          <EmptyState title="Todavía en blanco." description="Este autor no ha publicado nada por aquí — de momento." />
+          <EmptyState title={emptyTitle} description={emptyDescription} />
         ) : (
           <div className="grid sm:grid-cols-2 gap-x-12">
             {articles.map((a) => (
@@ -82,7 +89,7 @@ export function AuthorPage() {
 
       <p className="mt-10">
         <Link to="/autores" className="text-sm font-sans text-text-muted hover:text-accent transition-colors">
-          ← Todos los autores
+          {backLink}
         </Link>
       </p>
     </div>

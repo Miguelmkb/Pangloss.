@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, BookOpen, PenSquare, CheckSquare,
-  Users, Tag, Settings, LogOut, ChevronLeft, Menu, X, ExternalLink,
+  Users, Tag, Type, Settings, LogOut, ChevronLeft, Menu, X, ExternalLink,
   ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -31,6 +31,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/usuarios': 'Usuarios',
   '/admin/categorias': 'Categorías',
   '/admin/configuracion': 'Configuración',
+  '/admin/contenido': 'Contenido del sitio',
 };
 
 export function AdminLayout() {
@@ -93,7 +94,10 @@ export function AdminLayout() {
     },
     {
       label: 'Contenido',
-      items: [...(isEditor ? [{ to: '/admin/categorias', label: 'Categorías', icon: Tag, end: true }] : [])],
+      items: [
+        ...(isEditor ? [{ to: '/admin/categorias', label: 'Categorías', icon: Tag, end: true }] : []),
+        ...(isAdmin ? [{ to: '/admin/contenido', label: 'Contenido del sitio', icon: Type, end: true }] : []),
+      ],
     },
     {
       label: 'Sistema',

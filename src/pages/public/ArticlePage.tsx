@@ -6,11 +6,13 @@ import { ArticleContent } from '@/lib/content/renderArticleContent';
 import { ArticleListItem } from '@/components/public/ArticleListItem';
 import { ReadingProgress } from '@/components/public/ReadingProgress';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { NotFoundMark } from '@/components/public/NotFoundMark';
 import { formatDate, readingTimeLabel } from '@/lib/utils';
 import { usePageMeta } from '@/lib/seo';
 import { Download } from 'lucide-react';
 import { ArticleEndMark } from '@/components/public/ArticleEndMark';
 import { getCategoryWorld } from '@/lib/worlds/categoryWorlds';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 const REFERENCE_TYPE_LABELS: Record<string, string> = {
   book: 'Libro',
@@ -23,6 +25,9 @@ const REFERENCE_TYPE_LABELS: Record<string, string> = {
 
 export function ArticlePage() {
   const { slug } = useParams();
+  const notFoundTitle = useSiteContent('articlePage.notFoundTitle');
+  const notFoundDescription = useSiteContent('articlePage.notFoundDescription');
+  const relatedTitle = useSiteContent('articlePage.relatedTitle');
   const [article, setArticle] = useState<Article | null | undefined>(undefined);
   const [related, setRelated] = useState<Article[]>([]);
   const articleRef = useRef<HTMLElement>(null);
@@ -49,12 +54,7 @@ export function ArticlePage() {
   if (article === undefined) return null; // evita parpadeo del "no encontrado" mientras carga
 
   if (!article || article.status !== 'published') {
-    return (
-      <EmptyState
-        title="Este artículo no está disponible."
-        description="Puede que aún no se haya publicado, o que el enlace ya no exista."
-      />
-    );
+    return <EmptyState title={notFoundTitle} description={notFoundDescription} illustration={<NotFoundMark />} />;
   }
 
   const world = getCategoryWorld(article.category?.slug);
@@ -146,7 +146,7 @@ export function ArticlePage() {
 
       {related.length > 0 && (
         <section className="max-w-6xl mx-auto px-6 py-16 border-t border-border-light">
-          <h2 className="font-serif text-2xl font-semibold text-text-primary mb-8">También te puede interesar</h2>
+          <h2 className="font-serif text-2xl font-semibold text-text-primary mb-8">{relatedTitle}</h2>
           <div className="grid sm:grid-cols-2 gap-x-12">
             {related.map((a) => (
               <ArticleListItem key={a.id} article={a} />

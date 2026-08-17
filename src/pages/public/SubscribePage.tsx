@@ -4,11 +4,24 @@ import { getCategories, groupCategories, type CategoryGroup } from '@/lib/servic
 import { getAuthors } from '@/lib/services/authors';
 import { useSubscribe } from '@/hooks/useSubscribe';
 import { usePageMeta } from '@/lib/seo';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 type Mode = 'all' | 'specific';
 
 export function SubscribePage() {
   usePageMeta('Recibe Pangloss', 'Un aviso cuando publiquemos algo nuevo — nada más que eso.');
+
+  const title = useSiteContent('subscribe.title');
+  const intro = useSiteContent('subscribe.intro');
+  const allLabel = useSiteContent('subscribe.allLabel');
+  const allDescription = useSiteContent('subscribe.allDescription');
+  const authorsLabel = useSiteContent('subscribe.authorsLabel');
+  const categoriesLabel = useSiteContent('subscribe.categoriesLabel');
+  const emailFieldLabel = useSiteContent('subscribe.emailFieldLabel');
+  const disclaimer = useSiteContent('subscribe.disclaimer');
+  const successTitle = useSiteContent('subscribe.successTitle');
+  const successBodyTemplate = useSiteContent('subscribe.successBody');
+  const successNote = useSiteContent('subscribe.successNote');
 
   const [groups, setGroups] = useState<CategoryGroup[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
@@ -59,27 +72,33 @@ export function SubscribePage() {
   }
 
   if (status === 'success') {
+    // El email va en negrita dentro de la frase — se divide el texto por el
+    // token {email} en vez de sustituirlo por texto plano, para conservar
+    // ese énfasis sea cual sea la redacción que ponga el administrador.
+    const [beforeEmail, afterEmail] = successBodyTemplate.split('{email}');
     return (
       <div className="max-w-editorial mx-auto px-6 py-24 text-center">
-        <h1 className="font-serif text-3xl font-semibold text-text-primary mb-4">Una última cosa.</h1>
+        <h1 className="font-serif text-3xl font-semibold text-text-primary mb-4">{successTitle}</h1>
         <p className="text-base font-sans text-text-secondary leading-relaxed">
-          Te hemos escrito a <strong className="text-text-primary">{email}</strong> con un enlace para confirmar que
-          la dirección es tuya. En cuanto lo hagas, Pangloss se encarga del resto.
+          {afterEmail !== undefined ? (
+            <>
+              {beforeEmail}
+              <strong className="text-text-primary">{email}</strong>
+              {afterEmail}
+            </>
+          ) : (
+            successBodyTemplate
+          )}
         </p>
-        <p className="text-sm font-sans text-text-muted leading-relaxed mt-4">
-          Si no lo ves en un par de minutos, echa un vistazo a spam — a veces el primer correo se cuela ahí.
-        </p>
+        <p className="text-sm font-sans text-text-muted leading-relaxed mt-4">{successNote}</p>
       </div>
     );
   }
 
   return (
     <div className="max-w-editorial mx-auto px-6 py-24">
-      <h1 className="font-serif text-4xl font-semibold text-text-primary mb-3">Recibe Pangloss</h1>
-      <p className="text-lg font-sans text-text-secondary leading-relaxed mb-12">
-        Nada de boletines diarios ni de urgencia fingida: un aviso, solo cuando publiquemos algo que de verdad
-        merezca tu tiempo.
-      </p>
+      <h1 className="font-serif text-4xl font-semibold text-text-primary mb-3">{title}</h1>
+      <p className="text-lg font-sans text-text-secondary leading-relaxed mb-12">{intro}</p>
 
       <form onSubmit={handleSubmit} className="space-y-10">
         <div>
@@ -91,17 +110,15 @@ export function SubscribePage() {
             }`}
           >
             <span className={`block font-serif text-lg ${mode === 'all' ? 'text-accent' : 'text-text-primary'}`}>
-              Todo Pangloss
+              {allLabel}
             </span>
-            <span className="block text-sm font-sans text-text-muted mt-0.5">
-              Recibe cualquier cosa que publiquemos, sin filtrar.
-            </span>
+            <span className="block text-sm font-sans text-text-muted mt-0.5">{allDescription}</span>
           </button>
         </div>
 
         {authors.length > 0 && (
           <div>
-            <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-3">O elige autores concretos</p>
+            <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-3">{authorsLabel}</p>
             <div className="flex flex-wrap gap-2">
               {authors.map((a) => (
                 <button
@@ -123,7 +140,7 @@ export function SubscribePage() {
 
         {groups.length > 0 && (
           <div>
-            <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-3">O elige categorías concretas</p>
+            <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-3">{categoriesLabel}</p>
             <div className="space-y-3">
               {groups.map(({ parent, children }) => (
                 <div key={parent.id}>
@@ -164,7 +181,7 @@ export function SubscribePage() {
         )}
 
         <label className="block">
-          <span className="text-xs font-sans uppercase tracking-widest text-text-muted">Email</span>
+          <span className="text-xs font-sans uppercase tracking-widest text-text-muted">{emailFieldLabel}</span>
           <input
             type="email"
             required
@@ -185,9 +202,7 @@ export function SubscribePage() {
           >
             {status === 'loading' ? 'Enviando…' : 'Suscribirme'}
           </button>
-          <p className="text-xs font-sans text-text-muted leading-relaxed mt-4">
-            Puedes cambiar tus preferencias o dejar de recibir avisos cuando quieras — sin preguntas.
-          </p>
+          <p className="text-xs font-sans text-text-muted leading-relaxed mt-4">{disclaimer}</p>
         </div>
       </form>
     </div>

@@ -3,19 +3,16 @@ import { Link } from 'react-router-dom';
 import { Mail, Rss, ArrowRight } from 'lucide-react';
 import { CONTACT_EMAIL, gmailComposeHref } from '@/lib/contact';
 import { useSubscribe } from '@/hooks/useSubscribe';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 const CONTACT_HREF = gmailComposeHref();
-
-const PUBLICACION_LINKS = [
-  { to: '/articulos', label: 'Artículos' },
-  { to: '/categorias', label: 'Categorías' },
-  { to: '/autores', label: 'Autores' },
-  { to: '/buscar', label: 'Buscar' },
-];
 
 function FooterSubscribeForm() {
   const { status, errorMessage, submit } = useSubscribe();
   const [email, setEmail] = useState('');
+  const subscribeLabel = useSiteContent('footer.subscribeLabel');
+  const subscribeSuccess = useSiteContent('footer.subscribeSuccess');
+  const preferencesLink = useSiteContent('footer.preferencesLink');
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -25,14 +22,14 @@ function FooterSubscribeForm() {
   if (status === 'success') {
     return (
       <p className="text-sm font-sans text-text-primary max-w-xs leading-relaxed">
-        Revisa tu bandeja de entrada — te hemos mandado un enlace para confirmar.
+        {subscribeSuccess}
       </p>
     );
   }
 
   return (
     <div className="max-w-xs">
-      <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-3">Recibe los artículos nuevos</p>
+      <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-3">{subscribeLabel}</p>
       <form onSubmit={handleSubmit} className="flex items-stretch border-b border-border focus-within:border-text-primary transition-colors">
         <input
           type="email"
@@ -53,7 +50,7 @@ function FooterSubscribeForm() {
       </form>
       {status === 'error' && <p className="text-xs font-sans text-accent mt-2">{errorMessage}</p>}
       <Link to="/suscribete" className="inline-block text-xs font-sans text-text-muted hover:text-accent transition-colors mt-2">
-        ¿Solo ciertos temas o autores? Elige aquí →
+        {preferencesLink}
       </Link>
     </div>
   );
@@ -61,6 +58,21 @@ function FooterSubscribeForm() {
 
 export function Footer() {
   const year = new Date().getFullYear();
+  const description = useSiteContent('footer.description');
+  const quote = useSiteContent('footer.quote');
+  const navArticles = useSiteContent('nav.articles');
+  const navCategories = useSiteContent('nav.categories');
+  const navAuthors = useSiteContent('nav.authors');
+  const searchLink = useSiteContent('footer.searchLink');
+  const aboutLink = useSiteContent('footer.aboutLink');
+  const collaborateLink = useSiteContent('footer.collaborateLink');
+
+  const PUBLICACION_LINKS = [
+    { to: '/articulos', label: navArticles },
+    { to: '/categorias', label: navCategories },
+    { to: '/autores', label: navAuthors },
+    { to: '/buscar', label: searchLink },
+  ];
 
   return (
     <footer className="border-t border-border mt-24">
@@ -74,8 +86,7 @@ export function Footer() {
               </p>
             </div>
             <p className="text-sm font-sans text-text-secondary leading-relaxed max-w-xs mb-6">
-              Una revista digital de análisis, ensayo e investigación sobre economía, sociología,
-              historia, política, filosofía y cultura.
+              {description}
             </p>
             <FooterSubscribeForm />
           </div>
@@ -98,12 +109,12 @@ export function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link to="/sobre" className="text-sm font-sans text-text-secondary hover:text-text-primary transition-colors">
-                  Sobre nosotros
+                  {aboutLink}
                 </Link>
               </li>
               <li>
                 <Link to="/colabora" className="text-sm font-sans text-text-secondary hover:text-text-primary transition-colors">
-                  Escribe para Pangloss
+                  {collaborateLink}
                 </Link>
               </li>
               <li>
@@ -149,7 +160,7 @@ export function Footer() {
 
         <div className="border-t border-border-light pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs font-sans text-text-muted">© {year} Pangloss. Todos los derechos reservados.</p>
-          <p className="text-xs font-sans text-text-muted italic">«Todo está bien en el mejor de los mundos posibles.»</p>
+          <p className="text-xs font-sans text-text-muted italic">{quote}</p>
         </div>
       </div>
     </footer>

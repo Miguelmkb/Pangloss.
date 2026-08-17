@@ -3,9 +3,12 @@ import { Link } from 'react-router-dom';
 import { getCategories, groupCategories, type CategoryGroup } from '@/lib/services/categories';
 import { getAllCategoriesArticleCounts } from '@/lib/services/articles.public';
 import { usePageMeta } from '@/lib/seo';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export function CategoriesPage() {
   usePageMeta('Categorías', 'Las áreas de Pangloss.');
+  const pageTitle = useSiteContent('categoriesPage.title');
+  const pageDescription = useSiteContent('categoriesPage.description');
   const [groups, setGroups] = useState<CategoryGroup[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -20,8 +23,8 @@ export function CategoriesPage() {
 
   return (
     <div className="max-w-editorial mx-auto px-6 py-16">
-      <h1 className="font-serif text-4xl font-semibold text-text-primary mb-3">Categorías</h1>
-      <p className="text-base font-sans text-text-secondary mb-10">Las áreas de Pangloss.</p>
+      <h1 className="font-serif text-4xl font-semibold text-text-primary mb-3">{pageTitle}</h1>
+      <p className="text-base font-sans text-text-secondary mb-10">{pageDescription}</p>
 
       {loading ? (
         <div className="animate-pulse space-y-6" aria-hidden>

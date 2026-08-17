@@ -5,11 +5,19 @@ import { getCategories } from '@/lib/services/categories';
 import { getArticlesByCategorySlug, getAllCategoriesArticleCounts } from '@/lib/services/articles.public';
 import { ArticleListItem } from '@/components/public/ArticleListItem';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { NotFoundMark } from '@/components/public/NotFoundMark';
 import { usePageMeta } from '@/lib/seo';
 import { getCategoryWorld } from '@/lib/worlds/categoryWorlds';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export function CategoryPage() {
   const { slug } = useParams();
+  const notFoundTitle = useSiteContent('category.notFoundTitle');
+  const linkLostDescription = useSiteContent('common.linkLostDescription');
+  const emptyTitle = useSiteContent('category.emptyTitle');
+  const emptyDescriptionWithSubs = useSiteContent('category.emptyDescriptionWithSubs');
+  const emptyDescriptionNoSubs = useSiteContent('category.emptyDescriptionNoSubs');
+  const navCategories = useSiteContent('nav.categories');
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [category, setCategory] = useState<Category | null | undefined>(undefined);
   const [articles, setArticles] = useState<Article[]>([]);
@@ -38,7 +46,7 @@ export function CategoryPage() {
   if (category === undefined) return null;
 
   if (!category) {
-    return <EmptyState title="Esta categoría no existe." description="Puede que el enlace se haya perdido por el camino." />;
+    return <EmptyState title={notFoundTitle} description={linkLostDescription} illustration={<NotFoundMark />} />;
   }
 
   const parent = category.parent_id ? allCategories.find((c) => c.id === category.parent_id) : null;
@@ -52,7 +60,7 @@ export function CategoryPage() {
     <div className="max-w-6xl mx-auto px-6 py-16">
       <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-3">
         <Link to="/categorias" className="hover:text-accent transition-colors">
-          Categorías
+          {navCategories}
         </Link>
         {parent && (
           <>
@@ -83,12 +91,8 @@ export function CategoryPage() {
 
       {articles.length === 0 ? (
         <EmptyState
-          title="Todavía no hemos escrito sobre esto."
-          description={
-            subcategories.length > 0
-              ? 'Al menos no directamente en esta categoría — prueba con alguna de las subcategorías de arriba.'
-              : 'Quizá sea precisamente el momento de hacerlo. Aparecerá aquí en cuanto exista.'
-          }
+          title={emptyTitle}
+          description={subcategories.length > 0 ? emptyDescriptionWithSubs : emptyDescriptionNoSubs}
         />
       ) : (
         <div className="grid sm:grid-cols-2 gap-x-12">

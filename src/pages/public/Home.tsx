@@ -8,9 +8,17 @@ import { ArticleListItem } from '@/components/public/ArticleListItem';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { formatDate, readingTimeLabel } from '@/lib/utils';
 import { usePageMeta } from '@/lib/seo';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export function HomePage() {
   usePageMeta('Pangloss', 'Revista digital de ensayo, análisis e ideas.');
+
+  const heroCta = useSiteContent('home.heroCta');
+  const latestTitle = useSiteContent('home.latestTitle');
+  const viewAll = useSiteContent('home.viewAll');
+  const categoriesTitle = useSiteContent('home.categoriesTitle');
+  const emptyTitle = useSiteContent('home.emptyTitle');
+  const emptyDescription = useSiteContent('home.emptyDescription');
 
   const [featured, setFeatured] = useState<Article | null>(null);
   const [latest, setLatest] = useState<Article[]>([]);
@@ -40,10 +48,7 @@ export function HomePage() {
 
   if (!featured) {
     return (
-      <EmptyState
-        title="Pangloss está a punto de empezar."
-        description="Todavía no hay ningún artículo publicado. En cuanto se publique el primero, aparecerá aquí."
-      />
+      <EmptyState title={emptyTitle} description={emptyDescription} />
     );
   }
 
@@ -72,7 +77,7 @@ export function HomePage() {
               <span>{readingTimeLabel(featured.reading_time_minutes)}</span>
             </div>
             <span className="inline-flex items-center gap-2 text-sm font-sans font-medium text-text-primary group-hover:text-accent transition-colors">
-              Leer artículo
+              {heroCta}
               <ArrowRight className="w-4 h-4 arrow-nudge" strokeWidth={1.75} />
             </span>
           </div>
@@ -90,12 +95,12 @@ export function HomePage() {
       {latest.length > 0 && (
         <section className="max-w-6xl mx-auto px-6 py-16 border-t border-border-light">
           <div className="flex items-baseline justify-between mb-8">
-            <h2 className="font-serif text-2xl font-semibold text-text-primary">Últimos artículos</h2>
+            <h2 className="font-serif text-2xl font-semibold text-text-primary">{latestTitle}</h2>
             <Link
               to="/articulos"
               className="group inline-flex items-center gap-1.5 link-editorial text-sm font-sans text-text-muted hover:text-accent transition-colors"
             >
-              Ver todos
+              {viewAll}
               <ArrowRight className="w-3.5 h-3.5 arrow-nudge" strokeWidth={1.75} />
             </Link>
           </div>
@@ -110,7 +115,7 @@ export function HomePage() {
       {/* Categorías */}
       {categories.length > 0 && (
         <section className="max-w-6xl mx-auto px-6 py-16 border-t border-border-light">
-          <h2 className="font-serif text-2xl font-semibold text-text-primary mb-8">Por categorías</h2>
+          <h2 className="font-serif text-2xl font-semibold text-text-primary mb-8">{categoriesTitle}</h2>
           {/* flex-wrap + justify-center, no grid: así una última fila
               incompleta (sobra 1 o 2 categorías de un múltiplo de 3) queda
               centrada sola en vez de pegada a la izquierda — funciona igual

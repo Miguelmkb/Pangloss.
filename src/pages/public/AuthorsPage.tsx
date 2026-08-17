@@ -4,9 +4,14 @@ import type { Author } from '@/types/database';
 import { getAuthors } from '@/lib/services/authors';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { usePageMeta } from '@/lib/seo';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export function AuthorsPage() {
   usePageMeta('Autores', 'Las personas que escriben en Pangloss.');
+  const pageTitle = useSiteContent('authorsPage.title');
+  const pageDescription = useSiteContent('authorsPage.description');
+  const emptyTitle = useSiteContent('authorsPage.emptyTitle');
+  const emptyDescription = useSiteContent('authorsPage.emptyDescription');
   const [authors, setAuthors] = useState<Author[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,8 +24,8 @@ export function AuthorsPage() {
 
   return (
     <div className="max-w-editorial mx-auto px-6 py-16">
-      <h1 className="font-serif text-4xl font-semibold text-text-primary mb-3">Autores</h1>
-      <p className="text-base font-sans text-text-secondary mb-10">Las personas que escriben en Pangloss.</p>
+      <h1 className="font-serif text-4xl font-semibold text-text-primary mb-3">{pageTitle}</h1>
+      <p className="text-base font-sans text-text-secondary mb-10">{pageDescription}</p>
 
       {loading ? (
         <div className="animate-pulse space-y-6" aria-hidden>
@@ -29,7 +34,7 @@ export function AuthorsPage() {
           ))}
         </div>
       ) : authors.length === 0 ? (
-        <EmptyState title="Todavía no hay nadie aquí." description="Los autores aparecerán en cuanto se den de alta desde el panel editorial." />
+        <EmptyState title={emptyTitle} description={emptyDescription} />
       ) : (
         <div>
           {authors.map((author) => (

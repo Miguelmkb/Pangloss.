@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { unsubscribeByToken } from '@/lib/services/subscriptions';
 import { usePageMeta } from '@/lib/seo';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 type State = 'checking' | 'done' | 'invalid';
 
@@ -9,6 +10,11 @@ export function UnsubscribePage() {
   usePageMeta('Darse de baja', undefined);
   const [params] = useSearchParams();
   const [state, setState] = useState<State>('checking');
+
+  const doneTitle = useSiteContent('unsubscribe.doneTitle');
+  const doneBody = useSiteContent('unsubscribe.doneBody');
+  const backToPangloss = useSiteContent('common.backToPangloss');
+  const invalidBody = useSiteContent('unsubscribe.invalidBody');
 
   useEffect(() => {
     const token = params.get('token');
@@ -27,19 +33,15 @@ export function UnsubscribePage() {
 
       {state === 'done' && (
         <>
-          <h1 className="font-serif text-3xl font-semibold text-text-primary mb-4">Hecho.</h1>
-          <p className="text-base font-sans text-text-secondary leading-relaxed mb-8">
-            No volverás a recibir avisos por email. Si cambias de opinión, siempre puedes suscribirte otra vez.
-          </p>
+          <h1 className="font-serif text-3xl font-semibold text-text-primary mb-4">{doneTitle}</h1>
+          <p className="text-base font-sans text-text-secondary leading-relaxed mb-8">{doneBody}</p>
           <Link to="/" className="text-sm font-sans uppercase tracking-widest text-accent hover:text-accent-hover transition-colors">
-            Ir a Pangloss →
+            {backToPangloss}
           </Link>
         </>
       )}
 
-      {state === 'invalid' && (
-        <p className="text-base font-sans text-text-secondary leading-relaxed">Este enlace ya no es válido.</p>
-      )}
+      {state === 'invalid' && <p className="text-base font-sans text-text-secondary leading-relaxed">{invalidBody}</p>}
     </div>
   );
 }

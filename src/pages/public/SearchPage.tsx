@@ -4,12 +4,19 @@ import type { Article } from '@/types/database';
 import { searchArticles } from '@/lib/services/articles.public';
 import { ArticleListItem } from '@/components/public/ArticleListItem';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { NotFoundMark } from '@/components/public/NotFoundMark';
 import { usePageMeta } from '@/lib/seo';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export function SearchPage() {
   const [params] = useSearchParams();
   const q = params.get('q') ?? '';
   usePageMeta('Buscar', 'Buscador de Pangloss.');
+
+  const heading = useSiteContent('search.heading');
+  const promptTitle = useSiteContent('search.promptTitle');
+  const noResultsTitle = useSiteContent('search.noResultsTitle');
+  const noResultsDescription = useSiteContent('search.noResultsDescription');
 
   const [results, setResults] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,12 +48,12 @@ export function SearchPage() {
             Resultados para <span className="text-accent">"{q}"</span>
           </>
         ) : (
-          'Buscar en Pangloss'
+          heading
         )}
       </h1>
 
       {!q ? (
-        <EmptyState title="Escribe algo en el buscador del encabezado." />
+        <EmptyState title={promptTitle} />
       ) : loading ? (
         <div className="animate-pulse space-y-6" aria-hidden>
           {[1, 2].map((i) => (
@@ -54,10 +61,7 @@ export function SearchPage() {
           ))}
         </div>
       ) : results.length === 0 ? (
-        <EmptyState
-          title="Ninguna coincidencia."
-          description="Pangloss cree que todo tiene explicación — esta búsqueda, de momento, no la tiene."
-        />
+        <EmptyState title={noResultsTitle} description={noResultsDescription} illustration={<NotFoundMark />} />
       ) : (
         <div>
           {results.map((a) => (

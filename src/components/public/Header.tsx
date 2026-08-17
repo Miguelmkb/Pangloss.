@@ -1,15 +1,22 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Search, Menu, X } from 'lucide-react';
-
-const NAV_LINKS = [
-  { to: '/articulos', label: 'Artículos' },
-  { to: '/categorias', label: 'Categorías' },
-  { to: '/autores', label: 'Autores' },
-  { to: '/sobre', label: 'Sobre' },
-];
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export function Header() {
+  const navArticles = useSiteContent('nav.articles');
+  const navCategories = useSiteContent('nav.categories');
+  const navAuthors = useSiteContent('nav.authors');
+  const navAbout = useSiteContent('nav.about');
+  const searchHeading = useSiteContent('search.heading');
+  const searchPlaceholder = useSiteContent('nav.searchPlaceholder');
+
+  const NAV_LINKS = [
+    { to: '/articulos', label: navArticles },
+    { to: '/categorias', label: navCategories },
+    { to: '/autores', label: navAuthors },
+    { to: '/sobre', label: navAbout },
+  ];
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -145,7 +152,7 @@ export function Header() {
           </button>
           <div className="w-full max-w-xl">
             <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-6 text-center">
-              Buscar en Pangloss
+              {searchHeading}
             </p>
             <form onSubmit={handleSearch}>
               <input
@@ -153,7 +160,7 @@ export function Header() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="¿Qué buscas?"
+                placeholder={searchPlaceholder}
                 className="w-full font-serif text-2xl text-text-primary bg-transparent border-b-2 border-border focus:border-accent outline-none pb-3 placeholder:text-text-muted transition-colors"
               />
               <button

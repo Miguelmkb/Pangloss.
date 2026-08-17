@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'rea
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ToastProvider } from '@/context/ToastContext';
+import { SiteContentProvider } from '@/context/SiteContentContext';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { PageLoader } from '@/components/ui/PageLoader';
 import { SetupScreen } from '@/components/ui/SetupScreen';
@@ -32,6 +33,7 @@ import { AdminAuthors } from '@/pages/admin/AdminAuthors';
 import { AdminCategories } from '@/pages/admin/AdminCategories';
 import { AdminUsers } from '@/pages/admin/AdminUsers';
 import { SettingsPage } from '@/pages/admin/SettingsPage';
+import { AdminContentPage } from '@/pages/admin/AdminContentPage';
 
 function PublicLayout() {
   const location = useLocation();
@@ -76,47 +78,50 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ToastProvider>
-          <Routes>
-            <Route element={<PublicLayout />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/articulos" element={<ArticlesPage />} />
-              <Route path="/articulo/:slug" element={<ArticlePage />} />
-              <Route path="/categorias" element={<CategoriesPage />} />
-              <Route path="/categoria/:slug" element={<CategoryPage />} />
-              <Route path="/autores" element={<AuthorsPage />} />
-              <Route path="/autor/:slug" element={<AuthorPage />} />
-              <Route path="/sobre" element={<AboutPage />} />
-              <Route path="/colabora" element={<CollaboratePage />} />
-              <Route path="/suscribete" element={<SubscribePage />} />
-              <Route path="/confirmar-suscripcion" element={<ConfirmSubscriptionPage />} />
-              <Route path="/darse-de-baja" element={<UnsubscribePage />} />
-              <Route path="/buscar" element={<SearchPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
+        <SiteContentProvider>
+          <ToastProvider>
+            <Routes>
+              <Route element={<PublicLayout />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/articulos" element={<ArticlesPage />} />
+                <Route path="/articulo/:slug" element={<ArticlePage />} />
+                <Route path="/categorias" element={<CategoriesPage />} />
+                <Route path="/categoria/:slug" element={<CategoryPage />} />
+                <Route path="/autores" element={<AuthorsPage />} />
+                <Route path="/autor/:slug" element={<AuthorPage />} />
+                <Route path="/sobre" element={<AboutPage />} />
+                <Route path="/colabora" element={<CollaboratePage />} />
+                <Route path="/suscribete" element={<SubscribePage />} />
+                <Route path="/confirmar-suscripcion" element={<ConfirmSubscriptionPage />} />
+                <Route path="/darse-de-baja" element={<UnsubscribePage />} />
+                <Route path="/buscar" element={<SearchPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
 
-            <Route path="/login" element={<LoginPage />} />
+              <Route path="/login" element={<LoginPage />} />
 
-            <Route element={<ProtectedRoute />}>
-              <Route element={<AdminLayout />}>
-                <Route path="/admin" element={<Dashboard />} />
-                <Route path="/admin/mis-articulos" element={<AdminArticles onlyMine />} />
-                <Route path="/admin/articulos/nuevo" element={<ArticleEditPage />} />
-                <Route path="/admin/articulos/:id/editar" element={<ArticleEditPage />} />
-                <Route element={<RoleRoute editor />}>
-                  <Route path="/admin/articulos" element={<AdminArticles />} />
-                  <Route path="/admin/revision" element={<AdminArticles reviewMode />} />
-                  <Route path="/admin/autores" element={<AdminAuthors />} />
-                  <Route path="/admin/categorias" element={<AdminCategories />} />
-                </Route>
-                <Route element={<RoleRoute admin />}>
-                  <Route path="/admin/usuarios" element={<AdminUsers />} />
-                  <Route path="/admin/configuracion" element={<SettingsPage />} />
+              <Route element={<ProtectedRoute />}>
+                <Route element={<AdminLayout />}>
+                  <Route path="/admin" element={<Dashboard />} />
+                  <Route path="/admin/mis-articulos" element={<AdminArticles onlyMine />} />
+                  <Route path="/admin/articulos/nuevo" element={<ArticleEditPage />} />
+                  <Route path="/admin/articulos/:id/editar" element={<ArticleEditPage />} />
+                  <Route element={<RoleRoute editor />}>
+                    <Route path="/admin/articulos" element={<AdminArticles />} />
+                    <Route path="/admin/revision" element={<AdminArticles reviewMode />} />
+                    <Route path="/admin/autores" element={<AdminAuthors />} />
+                    <Route path="/admin/categorias" element={<AdminCategories />} />
+                  </Route>
+                  <Route element={<RoleRoute admin />}>
+                    <Route path="/admin/usuarios" element={<AdminUsers />} />
+                    <Route path="/admin/configuracion" element={<SettingsPage />} />
+                    <Route path="/admin/contenido" element={<AdminContentPage />} />
+                  </Route>
                 </Route>
               </Route>
-            </Route>
-          </Routes>
-        </ToastProvider>
+            </Routes>
+          </ToastProvider>
+        </SiteContentProvider>
       </AuthProvider>
     </BrowserRouter>
   );

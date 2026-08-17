@@ -6,9 +6,16 @@ import { getCategories } from '@/lib/services/categories';
 import { ArticleListItem } from '@/components/public/ArticleListItem';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { usePageMeta } from '@/lib/seo';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export function ArticlesPage() {
   usePageMeta('Artículos', 'Todos los textos publicados en Pangloss.');
+
+  const pageTitle = useSiteContent('articlesPage.title');
+  const pageDescription = useSiteContent('articlesPage.description');
+  const emptyTitle = useSiteContent('articlesPage.emptyTitle');
+  const emptyDescriptionAll = useSiteContent('articlesPage.emptyDescriptionAll');
+  const emptyDescriptionFiltered = useSiteContent('articlesPage.emptyDescriptionFiltered');
 
   const [params, setParams] = useSearchParams();
   const activeSlug = params.get('categoria');
@@ -42,8 +49,8 @@ export function ArticlesPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-16">
-      <h1 className="font-serif text-4xl font-semibold text-text-primary mb-3">Artículos</h1>
-      <p className="text-base font-sans text-text-secondary mb-8">Todos los textos publicados en Pangloss.</p>
+      <h1 className="font-serif text-4xl font-semibold text-text-primary mb-3">{pageTitle}</h1>
+      <p className="text-base font-sans text-text-secondary mb-8">{pageDescription}</p>
 
       <div className="flex flex-wrap gap-2 mb-10 pb-8 border-b border-border-light">
         <FilterPill label="Todos" active={!activeSlug} onClick={() => selectCategory(null)} />
@@ -60,8 +67,8 @@ export function ArticlesPage() {
         </div>
       ) : articles.length === 0 ? (
         <EmptyState
-          title="Nada por aquí todavía."
-          description={activeSlug ? 'Esta categoría no tiene artículos publicados por ahora.' : 'Todavía no hay artículos publicados.'}
+          title={emptyTitle}
+          description={activeSlug ? emptyDescriptionFiltered : emptyDescriptionAll}
         />
       ) : (
         <div className="grid sm:grid-cols-2 gap-x-12">
