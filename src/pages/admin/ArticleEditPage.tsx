@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Trash2, ImagePlus } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Trash2, ImagePlus, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { createDraftArticle, getArticleByIdAdmin, setArticleStatus, deleteArticle } from '@/lib/services/articles.admin';
@@ -15,6 +15,7 @@ import { ArticleEditor } from '@/components/editor/ArticleEditor';
 import { ReferencesPanel } from '@/components/editor/ReferencesPanel';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { slugify } from '@/lib/utils';
+import { estimateReadingMinutes } from '@/lib/content/readingTime';
 import { triggerArticleNotification } from '@/lib/services/subscriptions';
 
 export function ArticleEditPage() {
@@ -30,6 +31,11 @@ export function ArticleEditPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [uploadingFeatured, setUploadingFeatured] = useState(false);
   const featuredInputRef = useRef<HTMLInputElement>(null);
+  // El contenido del editor no se guarda en el estado de React en cada
+  // pulsación (por rendimiento — ver el onChange de ArticleEditor más
+  // abajo), así que esta ref es la única forma fiable de tener a mano "el
+  // contenido tal y como está ahora mismo" para el botón "Usar automático".
+  const latestContentRef = useRef<unknown>(null);
 
   // Rastro de un "Nuevo artículo" abandonado sin escribir nada: `isNewRef`
   // recuerda que esta sesión empezó sin id en la URL (durante toda la vida
@@ -94,6 +100,7 @@ export function ArticleEditPage() {
         // guardado local confirmado.
         setArticle({ ...a, ...recoveredPatch, content: recoveredPatch.content ?? a.content });
         setInitialContent(recoveredPatch.content ?? a.content);
+        latestContentRef.current = recoveredPatch.content ?? a.content;
         showToast('Se recuperaron cambios que no llegaron a guardarse.', 'error');
         // No basta con mostrarlos en pantalla: hay que reprogramar el mismo
         // parche para que el autoguardado lo escriba de verdad en el
@@ -103,6 +110,7 @@ export function ArticleEditPage() {
       } else {
         setArticle(a);
         setInitialContent(a.content);
+        latestContentRef.current = a.content;
       }
     });
     // `autosave.schedule` (no el objeto `autosave` entero, como sugeriría la
@@ -124,6 +132,14 @@ export function ArticleEditPage() {
     hasContentRef.current = true;
     setArticle({ ...article, ...local });
     autosave.schedule(p);
+  }
+
+  /** Vuelve al cálculo automático, recalculado con el contenido actual —
+   * para cuando un editor había corregido el número a mano y luego decide
+   * que prefiere que Pangloss lo estime de nuevo. */
+  function resetReadingTimeToAuto() {
+    const minutes = estimateReadingMinutes(latestContentRef.current);
+    patch({ reading_time_minutes: minutes, reading_time_auto: true }, { reading_time_minutes: minutes, reading_time_auto: true });
   }
 
   async function handleStatusChange(status: ArticleStatus) {
@@ -229,7 +245,19 @@ export function ArticleEditPage() {
             initialContent={initialContent}
             onChange={(json) => {
               hasContentRef.current = true;
-              autosave.schedule({ content: json });
+              latestContentRef.current = json;
+              // Automático por defecto: cada cambio de contenido recalcula
+              // el tiempo de lectura, salvo que un editor ya lo haya
+              // corregido a mano para este artículo (reading_time_auto en
+              // false) — en ese caso seguir escribiendo no debe pisar el
+              // número que ha decidido dejar.
+              if (article.reading_time_auto) {
+                const minutes = estimateReadingMinutes(json);
+                setArticle((prev) => (prev ? { ...prev, reading_time_minutes: minutes } : prev));
+                autosave.schedule({ content: json, reading_time_minutes: minutes });
+              } else {
+                autosave.schedule({ content: json });
+              }
             }}
           />
         </div>
@@ -287,14 +315,32 @@ export function ArticleEditPage() {
               </select>
             </label>
             <label className="block">
-              <span className="text-xs font-sans uppercase tracking-widest text-text-muted">Tiempo de lectura (min)</span>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-xs font-sans uppercase tracking-widest text-text-muted">Tiempo de lectura (min)</span>
+                {article.reading_time_auto ? (
+                  <span className="text-[11px] font-sans text-text-muted flex-shrink-0">Automático</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={resetReadingTimeToAuto}
+                    className="inline-flex items-center gap-1 text-[11px] font-sans text-text-muted hover:text-accent transition-colors flex-shrink-0"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Usar automático
+                  </button>
+                )}
+              </div>
               <input
                 type="number"
                 min={1}
                 value={article.reading_time_minutes}
                 onChange={(e) => {
                   const minutes = Math.max(1, Number(e.target.value) || 1);
-                  patch({ reading_time_minutes: minutes }, { reading_time_minutes: minutes });
+                  // Un editor corrigiendo el número a mano es la señal de
+                  // que Pangloss se ha equivocado esta vez — a partir de
+                  // aquí deja de recalcularlo solo hasta que se pida
+                  // explícitamente "Usar automático" otra vez.
+                  patch({ reading_time_minutes: minutes, reading_time_auto: false }, { reading_time_minutes: minutes, reading_time_auto: false });
                 }}
                 className="mt-1.5 w-24 border border-border px-2.5 py-2 text-sm font-sans outline-none focus:border-text-primary"
               />

@@ -91,6 +91,7 @@ export interface Article {
   status: ArticleStatus;
   featured: boolean;
   reading_time_minutes: number;
+  reading_time_auto: boolean;
   pdf_url: string | null;
   seo_title: string | null;
   seo_description: string | null;

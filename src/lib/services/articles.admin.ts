@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import type { Article, ArticleStatus } from '@/types/database';
 
 const ADMIN_FIELDS = `
-  id, title, subtitle, slug, status, featured, reading_time_minutes,
+  id, title, subtitle, slug, status, featured, reading_time_minutes, reading_time_auto,
   published_at, created_at, updated_at, version, user_id, author_id, category_id,
   author:authors(id, name),
   category:categories(id, name)
