@@ -61,7 +61,11 @@ export function LoginPage() {
             />
           </label>
 
-          {error && <p className="text-xs font-sans text-accent">{error}</p>}
+          {error && (
+            <p role="alert" className="text-xs font-sans text-accent">
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"

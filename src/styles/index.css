@@ -15,7 +15,11 @@
   :root {
     --color-text: #1a1a1a;
     --color-text-secondary: #4a4a4a;
-    --color-text-muted: #8a8a8a;
+    /* #8a8a8a (el valor original) da ~3.45:1 sobre blanco — por debajo del
+       mínimo AA de 4.5:1 para texto normal (WCAG 1.4.3). Este gris más
+       oscuro da ~4.6:1, cumple, y sigue leyéndose como "gris apagado" —
+       casi imperceptible al lado del original, no es un cambio visual. */
+    --color-text-muted: #757575;
     --color-border: #e2e0dc;
     --color-border-light: #f0eeea;
     --color-bg: #f7f6f2;

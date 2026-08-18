@@ -170,6 +170,38 @@ export const SITE_CONTENT_FIELDS: SiteContentField[] = [
     defaultValue: 'Buscar',
   },
   {
+    key: 'footer.publicationHeading',
+    group: 'Footer',
+    label: 'Título de la columna "Publicación"',
+    description: '',
+    type: 'short',
+    defaultValue: 'Publicación',
+  },
+  {
+    key: 'footer.aboutHeading',
+    group: 'Footer',
+    label: 'Título de la columna "Pangloss"',
+    description: '',
+    type: 'short',
+    defaultValue: 'Pangloss',
+  },
+  {
+    key: 'footer.adminLink',
+    group: 'Footer',
+    label: 'Enlace "Acceso privado"',
+    description: 'En la columna "Pangloss" del pie de página — lleva al panel editorial.',
+    type: 'short',
+    defaultValue: 'Acceso privado',
+  },
+  {
+    key: 'footer.contactLink',
+    group: 'Footer',
+    label: 'Enlace "Contacto"',
+    description: 'En la columna "Pangloss" del pie de página.',
+    type: 'short',
+    defaultValue: 'Contacto',
+  },
+  {
     key: 'footer.quote',
     group: 'Footer',
     label: 'Cita de cierre',
@@ -353,6 +385,7 @@ export const SITE_CONTENT_FIELDS: SiteContentField[] = [
   // --------------------------------------------------------------- Artículos
   { key: 'articlesPage.title', group: 'Artículos', label: 'Título de la página', description: '', type: 'short', defaultValue: 'Artículos' },
   { key: 'articlesPage.description', group: 'Artículos', label: 'Descripción de la página', description: '', type: 'short', defaultValue: 'Todos los textos publicados en Pangloss.' },
+  { key: 'articlesPage.allFilterLabel', group: 'Artículos', label: 'Etiqueta del filtro "todas las categorías"', description: '', type: 'short', defaultValue: 'Todos' },
   { key: 'articlesPage.emptyTitle', group: 'Artículos', label: 'Título sin artículos', description: '', type: 'short', defaultValue: 'Nada por aquí todavía.' },
   {
     key: 'articlesPage.emptyDescriptionAll',

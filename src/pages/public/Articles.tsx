@@ -16,6 +16,7 @@ export function ArticlesPage() {
   const emptyTitle = useSiteContent('articlesPage.emptyTitle');
   const emptyDescriptionAll = useSiteContent('articlesPage.emptyDescriptionAll');
   const emptyDescriptionFiltered = useSiteContent('articlesPage.emptyDescriptionFiltered');
+  const allFilterLabel = useSiteContent('articlesPage.allFilterLabel');
 
   const [params, setParams] = useSearchParams();
   const activeSlug = params.get('categoria');
@@ -53,7 +54,7 @@ export function ArticlesPage() {
       <p className="text-base font-sans text-text-secondary mb-8">{pageDescription}</p>
 
       <div className="flex flex-wrap gap-2 mb-10 pb-8 border-b border-border-light">
-        <FilterPill label="Todos" active={!activeSlug} onClick={() => selectCategory(null)} />
+        <FilterPill label={allFilterLabel} active={!activeSlug} onClick={() => selectCategory(null)} />
         {categories.map((c) => (
           <FilterPill key={c.id} label={c.name} active={activeSlug === c.slug} onClick={() => selectCategory(c.slug)} />
         ))}

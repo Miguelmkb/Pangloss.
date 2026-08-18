@@ -6,12 +6,44 @@
 [functions]
   node_bundler = "esbuild"
 
+# Meta tags (título, descripción, Open Graph, Twitter Card) servidas ya
+# puestas en el HTML únicamente para bots/crawlers de redes sociales y
+# buscadores — un usuario real recibe la SPA normal. Ver el comentario
+# grande en netlify/edge-functions/prerender.ts. La ruta también está
+# declarada ahí vía `export const config` (forma recomendada por Netlify);
+# se repite aquí por robustez.
+[[edge_functions]]
+  path = "/articulo/*"
+  function = "prerender"
+
+[[edge_functions]]
+  path = "/categoria/*"
+  function = "prerender"
+
+[[edge_functions]]
+  path = "/autor/*"
+  function = "prerender"
+
 # Feed RSS servido en una URL limpia, generado en caliente por la función
 # (no un archivo estático: así siempre refleja los artículos publicados más
 # recientes sin depender de un nuevo build).
 [[redirects]]
   from = "/rss.xml"
   to = "/.netlify/functions/rss"
+  status = 200
+
+# Igual que el RSS: el sitemap se genera en caliente (artículos, categorías
+# y autores actuales), nunca queda desfasado tras publicar/despublicar.
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/sitemap"
+  status = 200
+
+# robots.txt también generado en caliente, para poder apuntar el Sitemap al
+# dominio real de cada despliegue en vez de dejarlo hardcodeado.
+[[redirects]]
+  from = "/robots.txt"
+  to = "/.netlify/functions/robots"
   status = 200
 
 # SPA: cualquier ruta que no sea un archivo real ni una función cae en

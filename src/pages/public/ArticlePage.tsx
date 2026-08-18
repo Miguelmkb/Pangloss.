@@ -49,7 +49,11 @@ export function ArticlePage() {
     };
   }, [slug]);
 
-  usePageMeta(article?.seo_title || article?.title || '', article?.seo_description || article?.excerpt || undefined);
+  const isMissing = article !== undefined && (!article || article.status !== 'published');
+  usePageMeta(
+    isMissing ? notFoundTitle : article?.seo_title || article?.title || '',
+    isMissing ? notFoundDescription : article?.seo_description || article?.excerpt || undefined,
+  );
 
   if (article === undefined) return null; // evita parpadeo del "no encontrado" mientras carga
 

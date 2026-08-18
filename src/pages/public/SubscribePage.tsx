@@ -105,6 +105,7 @@ export function SubscribePage() {
           <button
             type="button"
             onClick={selectAll}
+            aria-pressed={mode === 'all'}
             className={`w-full text-left px-5 py-4 rounded-lg border transition-colors ${
               mode === 'all' ? 'border-accent bg-accent-light' : 'border-border hover:border-text-primary'
             }`}
@@ -125,6 +126,7 @@ export function SubscribePage() {
                   type="button"
                   key={a.id}
                   onClick={() => toggleAuthor(a.id)}
+                  aria-pressed={selectedAuthors.has(a.id)}
                   className={`px-3.5 py-1.5 text-sm font-sans rounded-full border transition-colors ${
                     selectedAuthors.has(a.id)
                       ? 'border-accent bg-accent-light text-accent'
@@ -147,6 +149,7 @@ export function SubscribePage() {
                   <button
                     type="button"
                     onClick={() => toggleCategory(parent.id)}
+                    aria-pressed={selectedCategories.has(parent.id)}
                     className={`px-3.5 py-1.5 text-sm font-sans rounded-full border transition-colors ${
                       selectedCategories.has(parent.id)
                         ? 'border-accent bg-accent-light text-accent'
@@ -163,6 +166,7 @@ export function SubscribePage() {
                           type="button"
                           key={child.id}
                           onClick={() => toggleCategory(child.id)}
+                          aria-pressed={selectedCategories.has(child.id)}
                           className={`px-3 py-1 text-xs font-sans rounded-full border transition-colors ${
                             selectedCategories.has(child.id)
                               ? 'border-accent bg-accent-light text-accent'
@@ -192,7 +196,11 @@ export function SubscribePage() {
           />
         </label>
 
-        {status === 'error' && <p className="text-sm font-sans text-accent">{errorMessage}</p>}
+        {status === 'error' && (
+          <p role="alert" className="text-sm font-sans text-accent">
+            {errorMessage}
+          </p>
+        )}
 
         <div>
           <button

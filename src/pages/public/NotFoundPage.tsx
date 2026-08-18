@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import { NotFoundMark } from '@/components/public/NotFoundMark';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { usePageMeta } from '@/lib/seo';
 
 export function NotFoundPage() {
   const title = useSiteContent('notFound.title');
   const subtitle = useSiteContent('notFound.subtitle');
   const link = useSiteContent('notFound.link');
+  usePageMeta('Página no encontrada', subtitle);
 
   return (
     <div className="max-w-editorial mx-auto px-6 py-32 text-center">

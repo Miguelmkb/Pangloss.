@@ -30,7 +30,9 @@ function FooterSubscribeForm() {
 
   return (
     <div className="max-w-xs">
-      <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-3">{subscribeLabel}</p>
+      <p id="footer-subscribe-label" className="text-xs font-sans uppercase tracking-widest text-text-muted mb-3">
+        {subscribeLabel}
+      </p>
       <form onSubmit={handleSubmit} className="flex items-stretch border-b border-border focus-within:border-text-primary transition-colors">
         <input
           type="email"
@@ -38,6 +40,7 @@ function FooterSubscribeForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="tu@email.com"
+          aria-labelledby="footer-subscribe-label"
           className="flex-1 min-w-0 bg-transparent py-2 text-sm font-sans text-text-primary placeholder:text-text-muted outline-none"
         />
         <button
@@ -49,7 +52,11 @@ function FooterSubscribeForm() {
           <ArrowRight className="w-4 h-4" />
         </button>
       </form>
-      {status === 'error' && <p className="text-xs font-sans text-accent mt-2">{errorMessage}</p>}
+      {status === 'error' && (
+        <p role="alert" className="text-xs font-sans text-accent mt-2">
+          {errorMessage}
+        </p>
+      )}
       <Link to="/suscribete" className="inline-block text-xs font-sans text-text-muted hover:text-accent transition-colors mt-2">
         {preferencesLink}
       </Link>
@@ -67,6 +74,10 @@ export function Footer() {
   const searchLink = useSiteContent('footer.searchLink');
   const aboutLink = useSiteContent('footer.aboutLink');
   const collaborateLink = useSiteContent('footer.collaborateLink');
+  const publicationHeading = useSiteContent('footer.publicationHeading');
+  const aboutHeading = useSiteContent('footer.aboutHeading');
+  const adminLink = useSiteContent('footer.adminLink');
+  const contactLink = useSiteContent('footer.contactLink');
   const { setOpen: setSearchOpen } = useSearchOverlay();
 
   const PUBLICACION_LINKS = [
@@ -93,7 +104,7 @@ export function Footer() {
           </div>
 
           <div>
-            <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-4">Publicación</p>
+            <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-4">{publicationHeading}</p>
             <ul className="space-y-2">
               {PUBLICACION_LINKS.map((link) => (
                 <li key={link.to}>
@@ -118,7 +129,7 @@ export function Footer() {
           </div>
 
           <div>
-            <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-4">Pangloss</p>
+            <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-4">{aboutHeading}</p>
             <ul className="space-y-2">
               <li>
                 <Link to="/sobre" className="text-sm font-sans text-text-secondary hover:text-text-primary transition-colors">
@@ -132,7 +143,7 @@ export function Footer() {
               </li>
               <li>
                 <Link to="/admin" className="text-sm font-sans text-text-secondary hover:text-text-primary transition-colors">
-                  Acceso privado
+                  {adminLink}
                 </Link>
               </li>
               <li>
@@ -154,7 +165,7 @@ export function Footer() {
                   className="inline-flex items-center gap-1.5 text-sm font-sans text-text-secondary hover:text-text-primary transition-colors"
                 >
                   <Mail className="w-3.5 h-3.5" />
-                  Contacto
+                  {contactLink}
                 </a>
               </li>
               <li>

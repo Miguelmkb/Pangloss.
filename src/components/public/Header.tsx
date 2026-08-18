@@ -53,6 +53,24 @@ export function Header() {
     return () => window.removeEventListener('scroll', handler);
   }, [menuOpen, searchOpen]);
 
+  // Escape cierra el que esté abierto (buscador o menú móvil) y, mientras
+  // el buscador está abierto, el fondo queda bloqueado para scroll — igual
+  // que ya hacen los modales del admin (`body.sidebar-open`, ver index.css).
+  useEffect(() => {
+    if (!searchOpen && !menuOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      setSearchOpen(false);
+      setMenuOpen(false);
+    }
+    document.addEventListener('keydown', onKey);
+    if (searchOpen) document.body.classList.add('sidebar-open');
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.classList.remove('sidebar-open');
+    };
+  }, [searchOpen, menuOpen, setSearchOpen]);
+
   function handleSearch(e: FormEvent) {
     e.preventDefault();
     const q = searchQuery.trim();
@@ -99,6 +117,8 @@ export function Header() {
                 onClick={() => setSearchOpen(true)}
                 className="p-2 text-text-secondary hover:text-text-primary transition-colors"
                 aria-label="Buscar"
+                aria-haspopup="dialog"
+                aria-expanded={searchOpen}
               >
                 <Search className="w-5 h-5" />
               </button>
@@ -112,6 +132,7 @@ export function Header() {
                 className="md:hidden p-2 text-text-secondary"
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-label="Menú"
+                aria-expanded={menuOpen}
               >
                 {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -143,7 +164,12 @@ export function Header() {
       </header>
 
       {searchOpen && (
-        <div className="fixed inset-0 z-[60] bg-white/95 backdrop-blur-sm flex items-start justify-center pt-32 px-6">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Buscar en Pangloss"
+          className="fixed inset-0 z-[60] bg-white/95 backdrop-blur-sm flex items-start justify-center pt-32 px-6"
+        >
           <button
             onClick={() => setSearchOpen(false)}
             className="absolute top-6 right-6 p-2 text-text-secondary hover:text-text-primary"
@@ -162,6 +188,7 @@ export function Header() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={searchPlaceholder}
+                aria-label="Buscar"
                 className="w-full font-serif text-2xl text-text-primary bg-transparent border-b-2 border-border focus:border-accent outline-none pb-3 placeholder:text-text-muted transition-colors"
               />
               <button

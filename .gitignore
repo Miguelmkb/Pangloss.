@@ -2,6 +2,8 @@ node_modules
 dist
 dist-ssr
 *.local
+*.tsbuildinfo
+supabase/.temp/
 
 # Material de referencia del proyecto anterior (Base44 / Bolt) — no forma
 # parte de la app, se usa solo como consulta local durante el desarrollo.

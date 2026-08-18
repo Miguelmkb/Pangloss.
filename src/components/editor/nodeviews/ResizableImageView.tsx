@@ -257,6 +257,8 @@ export function ResizableImageView({ node, updateAttributes, selected, deleteNod
               <div
                 key={corner}
                 className={`riv-handle riv-handle-${corner}`}
+                title="Redimensionar imagen"
+                aria-label="Redimensionar imagen"
                 onPointerDown={(e) => startResize(e, corner === 'nw' || corner === 'sw' ? -1 : 1)}
               />
             ))}

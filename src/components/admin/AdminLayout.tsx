@@ -159,6 +159,9 @@ export function AdminLayout() {
               <button
                 onClick={() => setUserMenuOpen((v) => !v)}
                 className="flex items-center gap-2.5 pl-1 pr-2 py-1 hover:bg-surface rounded transition-colors"
+                aria-label="Menú de usuario"
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
               >
                 <div className="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center font-sans text-xs font-medium flex-shrink-0">
                   {userInitial}
@@ -226,7 +229,7 @@ function SidebarContent({
           )}
         </Link>
         {isMobile ? (
-          <button onClick={onToggleCollapse} className="p-1 text-text-muted hover:text-text-primary flex-shrink-0">
+          <button onClick={onToggleCollapse} className="p-1 text-text-muted hover:text-text-primary flex-shrink-0" aria-label="Cerrar menú">
             <X className="w-4 h-4" />
           </button>
         ) : (
