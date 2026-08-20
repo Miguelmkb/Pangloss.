@@ -4,6 +4,7 @@ import { STATUS_LABELS } from '@/types/database';
 const STYLES: Record<ArticleStatus, string> = {
   draft: 'text-text-muted',
   in_review: 'text-warning',
+  scheduled: 'text-info',
   published: 'text-success',
   archived: 'text-text-muted',
 };

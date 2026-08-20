@@ -1,5 +1,6 @@
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { visibleNowOrFilter } from './lib/visibility';
 
 /**
  * Sitemap generado en caliente (mismo patrón que `rss.ts`) — no un archivo
@@ -28,7 +29,7 @@ export const handler: Handler = async () => {
   const siteUrl = process.env.URL || 'https://pangloss.example';
 
   const [articlesRes, categoriesRes, authorsRes] = await Promise.all([
-    supabase.from('articles').select('slug, updated_at, published_at').eq('status', 'published').order('published_at', { ascending: false }),
+    supabase.from('articles').select('slug, updated_at, published_at').or(visibleNowOrFilter()).order('published_at', { ascending: false }),
     supabase.from('categories').select('slug'),
     supabase.from('authors').select('slug'),
   ]);

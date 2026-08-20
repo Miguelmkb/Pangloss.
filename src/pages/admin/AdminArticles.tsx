@@ -8,7 +8,7 @@ import type { Article, ArticleStatus } from '@/types/database';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatDateTime } from '@/lib/utils';
 
 interface AdminArticlesProps {
   onlyMine?: boolean;
@@ -19,6 +19,7 @@ const STATUS_FILTERS: { value: ArticleStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'Todos' },
   { value: 'draft', label: 'Borradores' },
   { value: 'in_review', label: 'En revisión' },
+  { value: 'scheduled', label: 'Programados' },
   { value: 'published', label: 'Publicados' },
   { value: 'archived', label: 'Archivados' },
 ];
@@ -176,8 +177,9 @@ function ArticleRow({
   onStatusChange: (a: Article, status: ArticleStatus) => void;
   onDelete: () => void;
 }) {
-  const canEdit = isEditor || (isOwner && (article.status === 'draft' || article.status === 'in_review'));
-  const canDelete = isEditor || (isOwner && (article.status === 'draft' || article.status === 'in_review'));
+  const ownerEditableStatus = article.status === 'draft' || article.status === 'in_review' || article.status === 'scheduled';
+  const canEdit = isEditor || (isOwner && ownerEditableStatus);
+  const canDelete = isEditor || (isOwner && ownerEditableStatus);
 
   return (
     <tr className="border-b border-border-light hover:bg-surface transition-colors">
@@ -189,6 +191,9 @@ function ArticleRow({
       <td className="py-3 pr-4 hidden md:table-cell text-text-secondary">{article.category?.name ?? '—'}</td>
       <td className="py-3 pr-4">
         <StatusBadge status={article.status} />
+        {article.status === 'scheduled' && article.published_at && (
+          <p className="text-[11px] font-sans text-text-muted mt-0.5">{formatDateTime(article.published_at)}</p>
+        )}
       </td>
       <td className="py-3 pr-4 hidden sm:table-cell text-text-muted">{formatDate(article.updated_at)}</td>
       <td className="py-3 pr-2">
@@ -202,6 +207,12 @@ function ArticleRow({
           {article.status === 'in_review' && isEditor && (
             <>
               <IconAction label="Publicar" icon={CheckCircle2} onClick={() => onStatusChange(article, 'published')} />
+              <IconAction label="Devolver a borrador" icon={Undo2} onClick={() => onStatusChange(article, 'draft')} />
+            </>
+          )}
+          {article.status === 'scheduled' && isEditor && (
+            <>
+              <IconAction label="Publicar ahora" icon={CheckCircle2} onClick={() => onStatusChange(article, 'published')} />
               <IconAction label="Devolver a borrador" icon={Undo2} onClick={() => onStatusChange(article, 'draft')} />
             </>
           )}

@@ -11,7 +11,13 @@ export default {
         'accent-hover': '#9a2828',
         'text-primary': '#1a1a1a',
         'text-secondary': '#4a4a4a',
-        'text-muted': '#8a8a8a',
+        // #8a8a8a (el valor original) da ~3.45:1 sobre blanco — por debajo
+        // del mínimo AA de 4.5:1 para texto normal (WCAG 1.4.3). #757575 da
+        // ~4.6:1 y se ve casi idéntico. Mantener sincronizado con
+        // --color-text-muted en src/styles/index.css — dos sistemas
+        // distintos (esta clase Tailwind vs esa custom property) para el
+        // mismo tono, no duplicar el valor sin la otra.
+        'text-muted': '#757575',
         border: '#e2e0dc',
         'border-light': '#f0eeea',
         surface: '#f7f6f2',
@@ -22,6 +28,8 @@ export default {
         'success-light': '#eef4ee',
         warning: '#c8862a',
         'warning-light': '#faf1e3',
+        info: '#3d6b96',
+        'info-light': '#e8eef4',
       },
       fontFamily: {
         serif: ['"EB Garamond"', 'Georgia', '"Times New Roman"', 'serif'],

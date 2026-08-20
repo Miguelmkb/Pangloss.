@@ -66,7 +66,36 @@ export async function createDraftArticle(userId: string): Promise<Article> {
  * de la última edición (esa es `updated_at`, gestionada aparte).
  */
 export async function setArticleStatus(id: string, status: ArticleStatus): Promise<{ version: number }> {
-  const { data, error } = await supabase.from('articles').update({ status }).eq('id', id).select('version').single();
+  // Publicar (desde borrador, desde revisión, o forzar ya un artículo
+  // programado antes de su fecha) manda siempre el momento real: para un
+  // borrador sin fecha previa da igual, el trigger la habría puesto igual
+  // — pero para uno YA programado con una fecha futura, sin esto
+  // `published_at` se quedaría en esa fecha futura al publicarlo ahora
+  // mismo a mano. Si el artículo ya estaba "published" de verdad, el
+  // propio trigger ignora este valor y conserva el original — nunca lo
+  // desplaza (ver `tg_articles_freeze_published_at`).
+  const patch: { status: ArticleStatus; published_at?: string } = { status };
+  if (status === 'published') patch.published_at = new Date().toISOString();
+  const { data, error } = await supabase.from('articles').update(patch).eq('id', id).select('version').single();
+  if (error) throw error;
+  return data as { version: number };
+}
+
+/**
+ * Programa (o reprograma) la publicación para una fecha/hora futura —
+ * `status` y `published_at` en el mismo UPDATE, para que el trigger de la
+ * base de datos (`tg_articles_freeze_published_at`) los vea juntos: como
+ * el artículo no estaba ya "published", respeta la fecha que se le manda
+ * aquí tal cual, sin tocarla. Reprogramar (el artículo ya estaba
+ * "scheduled") es exactamente la misma llamada con una fecha distinta.
+ */
+export async function scheduleArticle(id: string, publishAt: Date): Promise<{ version: number }> {
+  const { data, error } = await supabase
+    .from('articles')
+    .update({ status: 'scheduled' satisfies ArticleStatus, published_at: publishAt.toISOString() })
+    .eq('id', id)
+    .select('version')
+    .single();
   if (error) throw error;
   return data as { version: number };
 }
@@ -85,18 +114,60 @@ export async function updateArticleMeta(
 }
 
 export async function getArticleByIdAdmin(id: string): Promise<Article | null> {
-  const { data, error } = await supabase
-    .from('articles')
-    .select('*, author:authors(*), category:categories(*)')
-    .eq('id', id)
-    .maybeSingle();
+  const { data, error } = await supabase.from('articles').select('*, author:authors(*), category:categories(*)').eq('id', id).maybeSingle();
   if (error) throw error;
   return data as unknown as Article | null;
+}
+
+/**
+ * Candidatas para el selector de "artículos relacionados" en el editor:
+ * cualquier OTRO artículo publicado o programado — el propio editor ya
+ * conoce el estado de sus artículos, no tiene sentido esconderle un
+ * borrador ajeno por no estar publicado todavía si va a estarlo pronto;
+ * lo que sí filtra `getRelatedArticles` (lado público) es que solo se
+ * muestre al lector si de verdad está disponible cuando él lo visite.
+ */
+export async function getRelatedCandidates(excludeId?: string): Promise<Article[]> {
+  let query = supabase
+    .from('articles')
+    .select('id, title, category_id, status, category:categories(name)')
+    .in('status', ['published', 'scheduled'])
+    .order('published_at', { ascending: false });
+  if (excludeId) query = query.neq('id', excludeId);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []) as unknown as Article[];
+}
+
+/** Los hasta 3 artículos relacionados ya elegidos para este artículo, en
+ * orden — usado para precargar el selector del editor. */
+export async function getRelatedArticleIds(articleId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('article_related')
+    .select('related_article_id')
+    .eq('article_id', articleId)
+    .order('sort_order', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((r) => (r as { related_article_id: string }).related_article_id);
+}
+
+/** Sustituye el conjunto entero por `relatedIds` (máximo 3, ya validado en
+ * el propio selector) — borrar-y-reinsertar es más simple y a la vez más
+ * robusto que calcular un diff, y esta tabla nunca tiene más de 3 filas
+ * por artículo, así que el coste es irrelevante. */
+export async function setRelatedArticles(articleId: string, relatedIds: string[]): Promise<void> {
+  const { error: delError } = await supabase.from('article_related').delete().eq('article_id', articleId);
+  if (delError) throw delError;
+  if (relatedIds.length === 0) return;
+  const rows = relatedIds.slice(0, 3).map((related_article_id, sort_order) => ({ article_id: articleId, related_article_id, sort_order }));
+  const { error: insError } = await supabase.from('article_related').insert(rows);
+  if (insError) throw insError;
 }
 
 export interface DashboardCounts {
   draft: number;
   in_review: number;
+  scheduled: number;
   published: number;
   archived: number;
   authors: number;
@@ -116,6 +187,7 @@ export async function getDashboardCounts(): Promise<DashboardCounts> {
   const counts: DashboardCounts = {
     draft: 0,
     in_review: 0,
+    scheduled: 0,
     published: 0,
     archived: 0,
     authors: authors.count ?? 0,

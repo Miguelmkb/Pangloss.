@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { Article } from '@/types/database';
-import { getArticleBySlug, getRelatedArticles } from '@/lib/services/articles.public';
+import { getArticleBySlug, getRelatedArticles, getAdjacentArticles } from '@/lib/services/articles.public';
 import { ArticleContent } from '@/lib/content/renderArticleContent';
-import { ArticleListItem } from '@/components/public/ArticleListItem';
 import { ReadingProgress } from '@/components/public/ReadingProgress';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { NotFoundMark } from '@/components/public/NotFoundMark';
@@ -11,6 +10,9 @@ import { formatDate, readingTimeLabel } from '@/lib/utils';
 import { usePageMeta } from '@/lib/seo';
 import { Download } from 'lucide-react';
 import { ArticleEndMark } from '@/components/public/ArticleEndMark';
+import { ShareButtons } from '@/components/public/ShareButtons';
+import { RelatedCarousel } from '@/components/public/RelatedCarousel';
+import { ArticleAdjacentNav } from '@/components/public/ArticleAdjacentNav';
 import { getCategoryWorld } from '@/lib/worlds/categoryWorlds';
 import { useSiteContent } from '@/context/SiteContentContext';
 
@@ -28,20 +30,27 @@ export function ArticlePage() {
   const notFoundTitle = useSiteContent('articlePage.notFoundTitle');
   const notFoundDescription = useSiteContent('articlePage.notFoundDescription');
   const relatedTitle = useSiteContent('articlePage.relatedTitle');
+  const shareLabel = useSiteContent('articlePage.shareLabel');
   const [article, setArticle] = useState<Article | null | undefined>(undefined);
   const [related, setRelated] = useState<Article[]>([]);
+  const [adjacent, setAdjacent] = useState<{ previous: Article | null; next: Article | null }>({ previous: null, next: null });
   const articleRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!slug) return;
     let active = true;
     setArticle(undefined);
+    setRelated([]);
+    setAdjacent({ previous: null, next: null });
     getArticleBySlug(slug).then(async (a) => {
       if (!active) return;
       setArticle(a);
       if (a) {
-        const r = await getRelatedArticles(a);
-        if (active) setRelated(r);
+        const [r, adj] = await Promise.all([getRelatedArticles(a), getAdjacentArticles(a)]);
+        if (active) {
+          setRelated(r);
+          setAdjacent(adj);
+        }
       }
     });
     return () => {
@@ -148,16 +157,14 @@ export function ArticlePage() {
 
       <ArticleEndMark />
 
-      {related.length > 0 && (
-        <section className="max-w-6xl mx-auto px-6 py-16 border-t border-border-light">
-          <h2 className="font-serif text-2xl font-semibold text-text-primary mb-8">{relatedTitle}</h2>
-          <div className="grid sm:grid-cols-2 gap-x-12">
-            {related.map((a) => (
-              <ArticleListItem key={a.id} article={a} />
-            ))}
-          </div>
-        </section>
-      )}
+      <div className="max-w-editorial mx-auto px-6 pb-10 flex items-center justify-center gap-3">
+        <span className="text-xs font-sans uppercase tracking-widest text-text-muted">{shareLabel}</span>
+        <ShareButtons url={typeof window !== 'undefined' ? window.location.href : ''} title={article.title} />
+      </div>
+
+      <RelatedCarousel articles={related} label={relatedTitle} />
+
+      <ArticleAdjacentNav previous={adjacent.previous} next={adjacent.next} />
     </article>
   );
 }

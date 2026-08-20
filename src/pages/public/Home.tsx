@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import type { Article, Category } from '@/types/database';
-import { getFeaturedArticle, getLatestArticles } from '@/lib/services/articles.public';
+import { getFeaturedArticle, getLatestArticles, getVisibleArticlesCount } from '@/lib/services/articles.public';
 import { getCategories } from '@/lib/services/categories';
 import { ArticleListItem } from '@/components/public/ArticleListItem';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -16,6 +16,7 @@ export function HomePage() {
   const heroCta = useSiteContent('home.heroCta');
   const latestTitle = useSiteContent('home.latestTitle');
   const viewAll = useSiteContent('home.viewAll');
+  const viewMoreArticles = useSiteContent('home.viewMoreArticles');
   const categoriesTitle = useSiteContent('home.categoriesTitle');
   const emptyTitle = useSiteContent('home.emptyTitle');
   const emptyDescription = useSiteContent('home.emptyDescription');
@@ -23,7 +24,14 @@ export function HomePage() {
   const [featured, setFeatured] = useState<Article | null>(null);
   const [latest, setLatest] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Tope absoluto de Home: el destacado (1) + como mucho 9 más = 10. El
+  // recuento total (barato, `head: true`, no trae filas) decide si hace
+  // falta el enlace "Ver más artículos" — nunca más de 10 aunque haya
+  // cientos publicados.
+  const HOME_TOTAL_LIMIT = 10;
 
   useEffect(() => {
     let active = true;
@@ -31,9 +39,14 @@ export function HomePage() {
       const feat = await getFeaturedArticle();
       if (!active) return;
       setFeatured(feat);
-      const [rest, cats] = await Promise.all([getLatestArticles(6, feat?.id), getCategories()]);
+      const [rest, cats, total] = await Promise.all([
+        getLatestArticles(HOME_TOTAL_LIMIT - 1, feat?.id),
+        getCategories(),
+        getVisibleArticlesCount(),
+      ]);
       if (!active) return;
       setLatest(rest);
+      setHasMore(total > HOME_TOTAL_LIMIT);
       // Todas las categorías padre, sin tope — ya vienen ordenadas por
       // `sort_order` desde `getCategories()`.
       setCategories(cats.filter((c) => !c.parent_id));
@@ -116,6 +129,17 @@ export function HomePage() {
               <ArticleListItem key={a.id} article={a} />
             ))}
           </div>
+          {hasMore && (
+            <div className="flex justify-center mt-12">
+              <Link
+                to="/articulos"
+                className="group inline-flex items-center gap-1.5 link-editorial text-xs font-sans uppercase tracking-widest text-text-muted hover:text-accent transition-colors"
+              >
+                {viewMoreArticles}
+                <ArrowRight className="w-3 h-3 arrow-nudge" strokeWidth={1.75} />
+              </Link>
+            </div>
+          )}
         </section>
       )}
 

@@ -19,6 +19,19 @@ import type { Context } from 'https://edge.netlify.com';
 const BOT_UA_PATTERN =
   /facebookexternalhit|twitterbot|linkedinbot|slackbot|whatsapp|telegrambot|discordbot|googlebot|bingbot|duckduckbot|pinterest|redditbot|applebot|yandex|semrushbot|ahrefsbot|embedly|quora link preview|vkshare|w3c_validator/i;
 
+/**
+ * Mismo criterio de "¿es visible para un lector ahora mismo?" que
+ * `visibleNow()` (`src/lib/services/articles.public.ts`) y
+ * `visibleNowOrFilter()` (`netlify/functions/lib/visibility.ts`) — sin
+ * compartir el archivo literal porque esta función corre en el runtime
+ * Deno de las Edge Functions, no en el Node de las Functions normales; la
+ * condición en sí es idéntica a propósito, para que un artículo programado
+ * tampoco se cuele aquí antes de tiempo.
+ */
+function visibleNowFilter(): string {
+  return `or=(status.eq.published,and(status.eq.scheduled,published_at.lte.${new Date().toISOString()}))`;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -91,7 +104,7 @@ export default async (request: Request, context: Context) => {
     const rows = (await supabaseSelect(
       supabaseUrl,
       supabaseKey,
-      `articles?slug=eq.${encodeURIComponent(slug)}&status=eq.published&select=title,subtitle,excerpt,seo_title,seo_description,featured_image_url,published_at,updated_at,author:authors(name),category:categories(name)`,
+      `articles?slug=eq.${encodeURIComponent(slug)}&${visibleNowFilter()}&select=title,subtitle,excerpt,seo_title,seo_description,featured_image_url,published_at,updated_at,author:authors(name),category:categories(name)`,
     )) as Array<{
       title: string;
       subtitle: string | null;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, FileText, Eye, Archive, Users, Tag, PenSquare } from 'lucide-react';
+import { CheckCircle2, FileText, Eye, Archive, Users, Tag, PenSquare, CalendarClock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getDashboardCounts, getRecentActivity, type DashboardCounts } from '@/lib/services/articles.admin';
 import type { Article } from '@/types/database';
@@ -34,10 +34,11 @@ export function Dashboard() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border-light mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-px bg-border-light mb-6">
         <StatTile icon={CheckCircle2} label="Publicados" value={counts?.published} tone="success" />
         <StatTile icon={FileText} label="Borradores" value={counts?.draft} />
         <StatTile icon={Eye} label="En revisión" value={counts?.in_review} tone="warning" />
+        <StatTile icon={CalendarClock} label="Programados" value={counts?.scheduled} tone="info" />
         <StatTile icon={Archive} label="Archivados" value={counts?.archived} />
       </div>
 
@@ -81,12 +82,13 @@ function StatTile({
   icon: typeof CheckCircle2;
   label: string;
   value: number | undefined;
-  tone?: 'success' | 'warning';
+  tone?: 'success' | 'warning' | 'info';
   compact?: boolean;
 }) {
+  const toneClass = tone === 'success' ? 'text-success' : tone === 'warning' ? 'text-warning' : tone === 'info' ? 'text-info' : 'text-text-muted';
   return (
     <div className="bg-white p-5">
-      <div className={`flex items-center gap-1.5 text-xs font-sans uppercase tracking-widest mb-2 ${tone === 'success' ? 'text-success' : tone === 'warning' ? 'text-warning' : 'text-text-muted'}`}>
+      <div className={`flex items-center gap-1.5 text-xs font-sans uppercase tracking-widest mb-2 ${toneClass}`}>
         <Icon className="w-3.5 h-3.5" />
         {label}
       </div>

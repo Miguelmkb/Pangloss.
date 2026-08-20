@@ -6,7 +6,7 @@
 
 export type UserRole = 'admin' | 'editor' | 'collaborator';
 
-export type ArticleStatus = 'draft' | 'in_review' | 'published' | 'archived';
+export type ArticleStatus = 'draft' | 'in_review' | 'scheduled' | 'published' | 'archived';
 
 export type ReferenceType = 'book' | 'article' | 'report' | 'document' | 'website' | 'other';
 
@@ -100,11 +100,16 @@ export interface Article {
   created_at: string;
   updated_at: string;
   version: number;
+  /** NULL = recomendación calculada sola (misma categoría, más reciente).
+   * Con valor = un editor ha fijado a mano qué artículo recomendar al
+   * final de este — ver `getRecommendedArticle` en articles.public.ts. */
+  recommended_article_id: string | null;
   // relaciones (joins)
   author?: Author | null;
   category?: Category | null;
   tags?: Tag[];
   references?: ArticleReference[];
+  recommended_article?: Article | null;
 }
 
 export interface ArticleImage {
@@ -144,6 +149,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 export const STATUS_LABELS: Record<ArticleStatus, string> = {
   draft: 'Borrador',
   in_review: 'En revisión',
+  scheduled: 'Programado',
   published: 'Publicado',
   archived: 'Archivado',
 };

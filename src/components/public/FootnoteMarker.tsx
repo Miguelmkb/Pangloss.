@@ -8,6 +8,7 @@ import { useState } from 'react';
  */
 export function FootnoteMarker({ id, number, text }: { id: string; number: number | undefined; text: string }) {
   const [open, setOpen] = useState(false);
+  const popoverId = `footnote-popover-${id}`;
 
   return (
     <sup className="footnote-marker-wrap">
@@ -15,6 +16,7 @@ export function FootnoteMarker({ id, number, text }: { id: string; number: numbe
         href={`#nota-${id}`}
         id={`ref-${id}`}
         className="footnote-ref"
+        aria-describedby={text ? popoverId : undefined}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}
@@ -29,7 +31,7 @@ export function FootnoteMarker({ id, number, text }: { id: string; number: numbe
         [{number ?? '?'}]
       </a>
       {open && text && (
-        <span className="footnote-popover" role="tooltip">
+        <span id={popoverId} className="footnote-popover" role="tooltip">
           {text}
         </span>
       )}

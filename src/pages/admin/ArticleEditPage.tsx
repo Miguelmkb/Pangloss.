@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Trash2, ImagePlus, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Trash2, ImagePlus, RotateCcw, CalendarClock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { createDraftArticle, getArticleByIdAdmin, setArticleStatus, deleteArticle } from '@/lib/services/articles.admin';
+import { createDraftArticle, getArticleByIdAdmin, setArticleStatus, scheduleArticle, deleteArticle } from '@/lib/services/articles.admin';
 import { getAllAuthorsAdmin } from '@/lib/services/authors.admin';
 import { getCategories } from '@/lib/services/categories';
 import { uploadPublicImage } from '@/lib/services/storage';
@@ -13,8 +13,9 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 import { SaveStatusIndicator } from '@/components/editor/SaveStatusIndicator';
 import { ArticleEditor } from '@/components/editor/ArticleEditor';
 import { ReferencesPanel } from '@/components/editor/ReferencesPanel';
+import { RelatedArticlesPicker } from '@/components/admin/RelatedArticlesPicker';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { slugify } from '@/lib/utils';
+import { slugify, formatDateTime } from '@/lib/utils';
 import { estimateReadingMinutes } from '@/lib/content/readingTime';
 import { triggerArticleNotification } from '@/lib/services/subscriptions';
 
@@ -178,6 +179,31 @@ export function ArticleEditPage() {
     }
   }
 
+  /** Igual que publicar de verdad (mismo requisito de slug, mismo flush
+   * antes de seguir) pero fijando `status: 'scheduled'` con la fecha
+   * elegida en vez de `published`. */
+  async function handleSchedule(publishAt: Date) {
+    if (!article) return;
+    try {
+      if (!article.slug) {
+        const slug = slugify(article.title || 'articulo');
+        autosave.schedule({ slug });
+        setArticle((prev) => (prev ? { ...prev, slug } : prev));
+        const saved = await autosave.flush();
+        if (!saved) {
+          showToast('No se pudo guardar el enlace del artículo. Comprueba la conexión e inténtalo de nuevo antes de programar.', 'error');
+          return;
+        }
+      }
+      const { version } = await scheduleArticle(article.id, publishAt);
+      autosave.syncVersion(version);
+      setArticle((prev) => (prev ? { ...prev, status: 'scheduled', published_at: publishAt.toISOString(), version } : prev));
+      showToast(`Programado para el ${formatDateTime(publishAt.toISOString())}.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'No se pudo programar.', 'error');
+    }
+  }
+
   async function handleDelete() {
     if (!article) return;
     await deleteArticle(article.id);
@@ -267,15 +293,21 @@ export function ArticleEditPage() {
             <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-3">Publicación</p>
             <div className="mb-4">
               <StatusBadge status={article.status} />
+              {article.status === 'scheduled' && article.published_at && (
+                <p className="text-xs font-sans text-text-muted mt-1">Programado para el {formatDateTime(article.published_at)}</p>
+              )}
             </div>
             <div className="space-y-2">
               {canSendToReview && <ActionButton label="Enviar a revisión" onClick={() => handleStatusChange('in_review')} />}
-              {canPublish && article.status !== 'published' && <ActionButton label="Publicar" primary onClick={() => handleStatusChange('published')} />}
+              {canPublish && article.status !== 'published' && <ActionButton label="Publicar ahora" primary onClick={() => handleStatusChange('published')} />}
               {canPublish && article.status === 'published' && <ActionButton label="Despublicar" onClick={() => handleStatusChange('draft')} />}
               {canPublish && article.status !== 'archived' && article.status !== 'draft' && (
                 <ActionButton label="Archivar" onClick={() => handleStatusChange('archived')} />
               )}
             </div>
+            {canPublish && (article.status === 'draft' || article.status === 'in_review' || article.status === 'scheduled') && (
+              <ScheduleControl currentValue={article.status === 'scheduled' ? article.published_at : null} onSchedule={handleSchedule} />
+            )}
             {article.status === 'published' && article.slug && (
               <a href={`/articulo/${article.slug}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-sans text-accent hover:text-accent-hover transition-colors mt-4">
                 <ExternalLink className="w-3.5 h-3.5" /> Ver en el sitio
@@ -402,6 +434,8 @@ export function ArticleEditPage() {
             />
           </div>
 
+          <RelatedArticlesPicker articleId={article.id} />
+
           <div className="border border-border p-5">
             <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-3">PDF descargable</p>
             <input
@@ -433,6 +467,70 @@ export function ArticleEditPage() {
           onCancel={() => setConfirmDelete(false)}
         />
       )}
+    </div>
+  );
+}
+
+/** `datetime-local` da la hora tal cual la lee el navegador del reloj del
+ * propio equipo, sin zona horaria explícita en el string — `new Date(...)`
+ * la interpreta como hora LOCAL de quien programa (justo lo que se
+ * espera: "el 20 a las 9" significa las 9 de su zona, no UTC), y de ahí
+ * `.toISOString()` ya guarda el instante absoluto correcto pase lo que
+ * pase con la zona horaria de quien lo lea después. */
+function toLocalInputValue(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function ScheduleControl({ currentValue, onSchedule }: { currentValue: string | null; onSchedule: (date: Date) => void }) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(() => toLocalInputValue(currentValue ?? new Date(Date.now() + 60 * 60 * 1000).toISOString()));
+  const isRescheduling = currentValue !== null;
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="w-full mt-2 inline-flex items-center justify-center gap-1.5 py-2 text-xs font-sans text-text-muted hover:text-accent border border-dashed border-border hover:border-accent transition-colors"
+      >
+        <CalendarClock className="w-3.5 h-3.5" />
+        {isRescheduling ? 'Reprogramar' : 'Programar publicación'}
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-2 pt-3 border-t border-border-light space-y-2">
+      <input
+        type="datetime-local"
+        value={value}
+        min={toLocalInputValue(new Date().toISOString())}
+        onChange={(e) => setValue(e.target.value)}
+        className="w-full border border-border px-2.5 py-2 text-sm font-sans outline-none focus:border-text-primary"
+      />
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="flex-1 py-1.5 text-xs font-sans text-text-secondary hover:text-text-primary border border-border transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const d = new Date(value);
+            if (Number.isNaN(d.getTime())) return;
+            onSchedule(d);
+            setOpen(false);
+          }}
+          className="flex-1 py-1.5 text-xs font-sans uppercase tracking-widest bg-text-primary text-white hover:bg-accent transition-colors"
+        >
+          {isRescheduling ? 'Reprogramar' : 'Programar'}
+        </button>
+      </div>
     </div>
   );
 }

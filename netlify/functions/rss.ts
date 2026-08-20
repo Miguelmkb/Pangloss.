@@ -1,5 +1,6 @@
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { visibleNowOrFilter } from './lib/visibility';
 
 /**
  * Feed RSS generado en caliente (no un archivo estático) para que siempre
@@ -45,7 +46,7 @@ export const handler: Handler = async () => {
   const { data: articles, error } = await supabase
     .from('articles')
     .select('id, title, slug, excerpt, published_at, featured_image_url, author:authors(name), category:categories(name)')
-    .eq('status', 'published')
+    .or(visibleNowOrFilter())
     .order('published_at', { ascending: false })
     .limit(50);
 

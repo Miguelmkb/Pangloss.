@@ -724,6 +724,10 @@ details[open] > summary .details-chevron {
   background-color: #c8862a;
 }
 
+.status-dot-scheduled {
+  background-color: #3d6b96;
+}
+
 .status-dot-published {
   background-color: #5a8a5a;
 }

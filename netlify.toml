@@ -6,6 +6,16 @@
 [functions]
   node_bundler = "esbuild"
 
+# Publicación programada: cada 5 minutos, pasa a "published" de verdad
+# cualquier artículo "scheduled" cuya fecha ya haya llegado, y dispara el
+# aviso a suscriptores — ver el comentario grande en
+# netlify/functions/publish-scheduled.ts. La visibilidad real para el
+# lector NO depende de este cron (la decide RLS en cada lectura); esto es
+# solo para que el estado del panel y el aviso por email queden al día sin
+# esperar a que alguien entre a mirar el artículo.
+[functions."publish-scheduled"]
+  schedule = "*/5 * * * *"
+
 # Meta tags (título, descripción, Open Graph, Twitter Card) servidas ya
 # puestas en el HTML únicamente para bots/crawlers de redes sociales y
 # buscadores — un usuario real recibe la SPA normal. Ver el comentario

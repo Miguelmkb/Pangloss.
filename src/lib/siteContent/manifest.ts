@@ -93,6 +93,14 @@ export const SITE_CONTENT_FIELDS: SiteContentField[] = [
   { key: 'home.heroCta', group: 'Portada', label: 'Enlace "Leer artículo"', description: 'Bajo el artículo destacado.', type: 'short', defaultValue: 'Leer artículo' },
   { key: 'home.latestTitle', group: 'Portada', label: 'Título "Últimos artículos"', description: '', type: 'short', defaultValue: 'Últimos artículos' },
   { key: 'home.viewAll', group: 'Portada', label: 'Enlace "Ver todos"', description: 'Junto a "Últimos artículos".', type: 'short', defaultValue: 'Ver todos' },
+  {
+    key: 'home.viewMoreArticles',
+    group: 'Portada',
+    label: 'Enlace "Ver más artículos"',
+    description: 'Debajo del todo, solo aparece cuando hay más de 10 artículos publicados — lleva a la misma página que "Artículos" en la cabecera.',
+    type: 'short',
+    defaultValue: 'Ver más artículos',
+  },
   { key: 'home.categoriesTitle', group: 'Portada', label: 'Título "Por categorías"', description: '', type: 'short', defaultValue: 'Por categorías' },
   {
     key: 'home.emptyTitle',
@@ -492,6 +500,14 @@ export const SITE_CONTENT_FIELDS: SiteContentField[] = [
     description: '',
     type: 'short',
     defaultValue: 'También te puede interesar',
+  },
+  {
+    key: 'articlePage.shareLabel',
+    group: 'Artículo',
+    label: 'Rótulo de "compartir"',
+    description: 'Junto a los botones de compartir, al final del artículo.',
+    type: 'short',
+    defaultValue: 'Compartir',
   },
 
   // ------------------------------------------------------------------------ 404
