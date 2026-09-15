@@ -301,6 +301,7 @@ export function ArticleEditPage() {
               {canSendToReview && <ActionButton label="Enviar a revisión" onClick={() => handleStatusChange('in_review')} />}
               {canPublish && article.status !== 'published' && <ActionButton label="Publicar ahora" primary onClick={() => handleStatusChange('published')} />}
               {canPublish && article.status === 'published' && <ActionButton label="Despublicar" onClick={() => handleStatusChange('draft')} />}
+              {canPublish && article.status === 'scheduled' && <ActionButton label="Devolver a borrador" onClick={() => handleStatusChange('draft')} />}
               {canPublish && article.status !== 'archived' && article.status !== 'draft' && (
                 <ActionButton label="Archivar" onClick={() => handleStatusChange('archived')} />
               )}
@@ -485,14 +486,23 @@ function toLocalInputValue(iso: string): string {
 
 function ScheduleControl({ currentValue, onSchedule }: { currentValue: string | null; onSchedule: (date: Date) => void }) {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(() => toLocalInputValue(currentValue ?? new Date(Date.now() + 60 * 60 * 1000).toISOString()));
+  const [value, setValue] = useState('');
   const isRescheduling = currentValue !== null;
+
+  // El valor del campo se calcula al ABRIR el control, no una sola vez al
+  // montar: este componente no se desmonta entre una programación y la
+  // siguiente, así que sin esto "Reprogramar" seguiría mostrando la fecha
+  // por defecto del primer montaje en vez de la ya programada.
+  function openControl() {
+    setValue(toLocalInputValue(currentValue ?? new Date(Date.now() + 60 * 60 * 1000).toISOString()));
+    setOpen(true);
+  }
 
   if (!open) {
     return (
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openControl}
         className="w-full mt-2 inline-flex items-center justify-center gap-1.5 py-2 text-xs font-sans text-text-muted hover:text-accent border border-dashed border-border hover:border-accent transition-colors"
       >
         <CalendarClock className="w-3.5 h-3.5" />

@@ -19,7 +19,6 @@ export interface ArticleSavePatch {
   pdf_url?: string | null;
   reading_time_minutes?: number;
   reading_time_auto?: boolean;
-  recommended_article_id?: string | null;
 }
 
 function localKey(articleId: string) {

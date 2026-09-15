@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { Article } from '@/types/database';
-import { getArticleBySlug, getRelatedArticles, getAdjacentArticles } from '@/lib/services/articles.public';
+import { getArticleBySlug, getRelatedArticles, getAdjacentArticles, isArticleLive } from '@/lib/services/articles.public';
 import { ArticleContent } from '@/lib/content/renderArticleContent';
 import { ReadingProgress } from '@/components/public/ReadingProgress';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -58,7 +58,7 @@ export function ArticlePage() {
     };
   }, [slug]);
 
-  const isMissing = article !== undefined && (!article || article.status !== 'published');
+  const isMissing = article !== undefined && (!article || !isArticleLive(article));
   usePageMeta(
     isMissing ? notFoundTitle : article?.seo_title || article?.title || '',
     isMissing ? notFoundDescription : article?.seo_description || article?.excerpt || undefined,
@@ -66,7 +66,7 @@ export function ArticlePage() {
 
   if (article === undefined) return null; // evita parpadeo del "no encontrado" mientras carga
 
-  if (!article || article.status !== 'published') {
+  if (!article || !isArticleLive(article)) {
     return <EmptyState title={notFoundTitle} description={notFoundDescription} illustration={<NotFoundMark />} />;
   }
 

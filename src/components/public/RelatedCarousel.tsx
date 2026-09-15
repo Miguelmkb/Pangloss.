@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState, type KeyboardEvent, type TouchEvent } from 'react';
 import { Link } from 'react-router-dom';
 import type { Article } from '@/types/database';
+
+const SWIPE_THRESHOLD_PX = 40;
 
 /**
  * Hasta 3 artículos relacionados, elegidos a mano en el editor — uno visible
@@ -17,15 +19,53 @@ import type { Article } from '@/types/database';
  */
 export function RelatedCarousel({ articles, label }: { articles: Article[]; label: string }) {
   const [active, setActive] = useState(0);
+  const touchStartX = useRef<number | null>(null);
 
   if (articles.length === 0) return null;
-  const current = articles[Math.min(active, articles.length - 1)];
+  const count = articles.length;
+  const current = articles[Math.min(active, count - 1)];
+
+  function go(delta: number) {
+    if (count < 2) return;
+    setActive((i) => (i + delta + count) % count);
+  }
+
+  function handleTouchStart(e: TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+
+  function handleTouchEnd(e: TouchEvent) {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (delta > SWIPE_THRESHOLD_PX) go(-1);
+    else if (delta < -SWIPE_THRESHOLD_PX) go(1);
+  }
+
+  // Flechas de teclado además de Tab+Enter sobre los puntos — cualquier
+  // elemento con foco dentro de la sección las recibe por burbujeo.
+  function handleKeyDown(e: KeyboardEvent) {
+    if (count < 2) return;
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      go(-1);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      go(1);
+    }
+  }
 
   return (
-    <section className="max-w-editorial mx-auto px-6 pb-16">
+    <section className="max-w-editorial mx-auto px-6 pb-16" onKeyDown={handleKeyDown}>
       <p className="text-xs font-sans uppercase tracking-widest text-text-muted mb-4">{label}</p>
 
-      <div key={current.id} className="page-fade-in" aria-live="polite">
+      <div
+        key={current.id}
+        className="page-fade-in"
+        aria-live="polite"
+        onTouchStart={count > 1 ? handleTouchStart : undefined}
+        onTouchEnd={count > 1 ? handleTouchEnd : undefined}
+      >
         <Link to={`/articulo/${current.slug}`} className="group block">
           <div className="w-full aspect-[16/9] bg-border-light rounded-sm overflow-hidden mb-3">
             {current.featured_image_url && (

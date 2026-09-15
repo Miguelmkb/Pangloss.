@@ -100,10 +100,6 @@ export interface Article {
   created_at: string;
   updated_at: string;
   version: number;
-  /** NULL = recomendación calculada sola (misma categoría, más reciente).
-   * Con valor = un editor ha fijado a mano qué artículo recomendar al
-   * final de este — ver `getRecommendedArticle` en articles.public.ts. */
-  recommended_article_id: string | null;
   // relaciones (joins)
   author?: Author | null;
   category?: Category | null;

@@ -40,6 +40,19 @@ function visibleNow<T>(query: T): T {
 }
 
 /**
+ * Misma condición que `visibleNow()`, pero evaluada en memoria sobre un
+ * artículo ya obtenido (p. ej. por slug) en vez de en la consulta — para
+ * decidir si mostrarlo o el "no encontrado" editorial. Comprobar solo
+ * `status === 'published'` aquí sería reintroducir la dependencia del cron
+ * de `publish-scheduled.ts` que el resto del sitio evita a propósito: un
+ * "scheduled" cuya fecha ya llegó es públicamente visible por RLS aunque
+ * la columna todavía diga "scheduled" hasta que el cron pase (hasta 5 min).
+ */
+export function isArticleLive(article: Pick<Article, 'status' | 'published_at'>): boolean {
+  return article.status === 'published' || (article.status === 'scheduled' && !!article.published_at && new Date(article.published_at) <= new Date());
+}
+
+/**
  * La portada es siempre el artículo publicado más reciente — nunca uno fijo
  * por más tiempo que lleve marcado como "destacado". Antes se priorizaba
  * `featured`, lo que dejaba anclado el mismo artículo en portada aunque se

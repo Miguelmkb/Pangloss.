@@ -128,10 +128,16 @@ export async function getArticleByIdAdmin(id: string): Promise<Article | null> {
  * muestre al lector si de verdad está disponible cuando él lo visite.
  */
 export async function getRelatedCandidates(excludeId?: string): Promise<Article[]> {
+  // Orden por `status` ascendente antes que por fecha: alfabéticamente
+  // "published" precede a "scheduled", así que los ya publicados (más
+  // relevantes como relacionado) siempre aparecen antes que uno programado
+  // para dentro de semanas, en vez de que una fecha futura lejana lo cuele
+  // por delante de algo publicado ayer.
   let query = supabase
     .from('articles')
     .select('id, title, category_id, status, category:categories(name)')
     .in('status', ['published', 'scheduled'])
+    .order('status', { ascending: true })
     .order('published_at', { ascending: false });
   if (excludeId) query = query.neq('id', excludeId);
   const { data, error } = await query;
